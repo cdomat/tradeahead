@@ -1,0 +1,38 @@
+[
+  {
+    "date": "2023-06-14",
+    "pair": "USD/NGN",
+    "title": "Nigeria unifies FX windows",
+    "detail": "The central bank merges its exchange-rate windows. The official rate jumps from about ₦461 to ₦750 per dollar within days."
+  },
+  {
+    "date": "2023-12-29",
+    "pair": "USD/NGN",
+    "title": "₦900 by year end",
+    "detail": "A $50,000 order that cost about ₦23m in May now costs about ₦45m."
+  },
+  {
+    "date": "2024-02-01",
+    "pair": "USD/NGN",
+    "title": "Second naira slide",
+    "detail": "The naira falls past ₦1,400 per dollar as dollar shortages persist."
+  },
+  {
+    "date": "2022-10-27",
+    "pair": "USD/EGP",
+    "title": "Egypt devalues",
+    "detail": "The pound moves from about E£19.7 to E£23 per dollar after an IMF agreement."
+  },
+  {
+    "date": "2024-03-06",
+    "pair": "USD/EGP",
+    "title": "Egypt floats the pound",
+    "detail": "The pound drops from about E£31 to E£49 per dollar in one day."
+  },
+  {
+    "date": "2026-02-02",
+    "pair": "USD/EGP",
+    "title": "Dollar +19% since February 2026",
+    "detail": "A steady climb in the dollar's cost in pounds through October 2026."
+  }
+]

@@ -1,0 +1,186 @@
+[
+  {
+    "id": "NG-B1",
+    "market": "NG",
+    "name": "Atlas Commercial Bank",
+    "type": "Tier-1 bank",
+    "min_ticket": 5000,
+    "max_ticket": 250000,
+    "daily_capacity": 400000,
+    "spread_bps": {
+      "<10k": 140,
+      "10-50k": 95,
+      "50-250k": 70,
+      "250k+": 60
+    },
+    "fill_prob": {
+      "<10k": 0.62,
+      "10-50k": 0.7,
+      "50-250k": 0.8,
+      "250k+": 0.85
+    },
+    "delay_days": 6.0,
+    "slippage_bps": 15
+  },
+  {
+    "id": "NG-B2",
+    "market": "NG",
+    "name": "Harbour Trust Bank",
+    "type": "Tier-2 bank",
+    "min_ticket": 2000,
+    "max_ticket": 100000,
+    "daily_capacity": 150000,
+    "spread_bps": {
+      "<10k": 120,
+      "10-50k": 90,
+      "50-250k": 75,
+      "250k+": 75
+    },
+    "fill_prob": {
+      "<10k": 0.74,
+      "10-50k": 0.78,
+      "50-250k": 0.72,
+      "250k+": 0.6
+    },
+    "delay_days": 4.0,
+    "slippage_bps": 25
+  },
+  {
+    "id": "NG-F1",
+    "market": "NG",
+    "name": "Kestrel FX",
+    "type": "Licensed FX provider",
+    "min_ticket": 500,
+    "max_ticket": 60000,
+    "daily_capacity": 120000,
+    "spread_bps": {
+      "<10k": 110,
+      "10-50k": 100,
+      "50-250k": 100,
+      "250k+": 100
+    },
+    "fill_prob": {
+      "<10k": 0.95,
+      "10-50k": 0.92,
+      "50-250k": 0.8,
+      "250k+": 0.6
+    },
+    "delay_days": 1.5,
+    "slippage_bps": 10
+  },
+  {
+    "id": "NG-F2",
+    "market": "NG",
+    "name": "Lagoon Pay",
+    "type": "Licensed payment provider",
+    "min_ticket": 1000,
+    "max_ticket": 40000,
+    "daily_capacity": 80000,
+    "spread_bps": {
+      "<10k": 90,
+      "10-50k": 85,
+      "50-250k": 85,
+      "250k+": 85
+    },
+    "fill_prob": {
+      "<10k": 0.88,
+      "10-50k": 0.83,
+      "50-250k": 0.7,
+      "250k+": 0.5
+    },
+    "delay_days": 2.5,
+    "slippage_bps": 30
+  },
+  {
+    "id": "NG-B3",
+    "market": "NG",
+    "name": "Delta Merchant Bank",
+    "type": "Merchant bank",
+    "min_ticket": 20000,
+    "max_ticket": 500000,
+    "daily_capacity": 600000,
+    "spread_bps": {
+      "<10k": 200,
+      "10-50k": 80,
+      "50-250k": 55,
+      "250k+": 45
+    },
+    "fill_prob": {
+      "<10k": 0.5,
+      "10-50k": 0.66,
+      "50-250k": 0.78,
+      "250k+": 0.86
+    },
+    "delay_days": 8.0,
+    "slippage_bps": 12
+  },
+  {
+    "id": "EG-B1",
+    "market": "EG",
+    "name": "Nile Crescent Bank",
+    "type": "Tier-1 bank",
+    "min_ticket": 5000,
+    "max_ticket": 300000,
+    "daily_capacity": 500000,
+    "spread_bps": {
+      "<10k": 120,
+      "10-50k": 80,
+      "50-250k": 60,
+      "250k+": 50
+    },
+    "fill_prob": {
+      "<10k": 0.7,
+      "10-50k": 0.78,
+      "50-250k": 0.84,
+      "250k+": 0.88
+    },
+    "delay_days": 5.0,
+    "slippage_bps": 12
+  },
+  {
+    "id": "EG-F1",
+    "market": "EG",
+    "name": "Pharos Exchange",
+    "type": "Licensed FX provider",
+    "min_ticket": 500,
+    "max_ticket": 50000,
+    "daily_capacity": 100000,
+    "spread_bps": {
+      "<10k": 100,
+      "10-50k": 95,
+      "50-250k": 95,
+      "250k+": 95
+    },
+    "fill_prob": {
+      "<10k": 0.93,
+      "10-50k": 0.9,
+      "50-250k": 0.75,
+      "250k+": 0.55
+    },
+    "delay_days": 1.5,
+    "slippage_bps": 10
+  },
+  {
+    "id": "EG-B2",
+    "market": "EG",
+    "name": "Delta Gulf Bank",
+    "type": "Tier-2 bank",
+    "min_ticket": 2000,
+    "max_ticket": 120000,
+    "daily_capacity": 180000,
+    "spread_bps": {
+      "<10k": 110,
+      "10-50k": 85,
+      "50-250k": 70,
+      "250k+": 70
+    },
+    "fill_prob": {
+      "<10k": 0.76,
+      "10-50k": 0.8,
+      "50-250k": 0.74,
+      "250k+": 0.62
+    },
+    "delay_days": 3.5,
+    "slippage_bps": 20
+  }
+]

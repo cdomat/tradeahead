@@ -1,0 +1,19 @@
+[theme]
+base = "light"
+primaryColor = "#B8501E"
+backgroundColor = "#F6F4EE"
+secondaryBackgroundColor = "#FDFCF8"
+textColor = "#0F2A2E"
+borderColor = "#E9E5DA"
+baseRadius = "8px"
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = true
+
+[server]
+headless = true
+runOnSave = true
+
+[browser]
+gatherUsageStats = false

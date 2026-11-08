@@ -1,0 +1,93 @@
+{
+  "markets": {
+    "NG": {
+      "name": "Nigeria",
+      "local": "NGN",
+      "symbol": "₦",
+      "pairs": [
+        "USD/NGN",
+        "CNY/NGN",
+        "EUR/NGN",
+        "GBP/NGN",
+        "CAD/NGN"
+      ],
+      "default_pair": "USD/NGN",
+      "local_deposit_rate": 0.18,
+      "usd_holding_rate": 0.02,
+      "parallel_premium": 0.037,
+      "baseline_bank_cost": 0.02,
+      "settlement_days": 1,
+      "late_cost_per_day": 0.003,
+      "note": "Deposit rate: assumed SME naira deposit/money-market yield. Parallel premium: up to 3.7% saving from authorized dealers (TradeAhead concept summary). Bank cost: assumed all-in cost an SME pays its bank today. Late cost: daily cost of a delayed supplier payment (held cargo, demurrage), as a share of the payment."
+    },
+    "EG": {
+      "name": "Egypt",
+      "local": "EGP",
+      "symbol": "E£",
+      "pairs": [
+        "USD/EGP",
+        "CNY/EGP",
+        "EUR/EGP"
+      ],
+      "default_pair": "USD/EGP",
+      "local_deposit_rate": 0.2,
+      "usd_holding_rate": 0.02,
+      "parallel_premium": 0.02,
+      "baseline_bank_cost": 0.02,
+      "settlement_days": 1,
+      "late_cost_per_day": 0.003,
+      "note": "Phase 3 market (months 25-36). Same engine, new dealer partner."
+    }
+  },
+  "tiers": {
+    "Starter": {
+      "price_month": 0,
+      "fx_margin": 0.01,
+      "features": [
+        "Invoice upload",
+        "Exposure dashboard",
+        "Manual conversions"
+      ]
+    },
+    "Growth": {
+      "price_month": 49,
+      "fx_margin": 0.008,
+      "features": [
+        "Protection plan",
+        "Target-rate rules",
+        "Direct supplier payment"
+      ]
+    },
+    "Pro": {
+      "price_month": 149,
+      "fx_margin": 0.006,
+      "features": [
+        "Cash-flow forecasting",
+        "Routing reports",
+        "Multi-user access"
+      ]
+    }
+  },
+  "buckets": [
+    [
+      0,
+      10000,
+      "<10k"
+    ],
+    [
+      10000,
+      50000,
+      "10-50k"
+    ],
+    [
+      50000,
+      250000,
+      "50-250k"
+    ],
+    [
+      250000,
+      1000000000000.0,
+      "250k+"
+    ]
+  ]
+}

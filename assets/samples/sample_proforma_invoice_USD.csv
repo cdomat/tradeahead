@@ -1,0 +1,2 @@
+invoice_no,issue_date,supplier,buyer,currency,total,deposit_pct,deposit_paid,balance,incoterm,port_of_loading,port_of_discharge,etd,bl_date,eta,balance_due,payment_terms
+PI-SZBW-2611-0417,2026-11-02,"Shenzhen Brightway Electronics Co., Ltd.",[Your company name] Ltd.,USD,49865.0,0.3,True,34905.5,CIF,"Shekou, Shenzhen","Apapa, Lagos",2026-11-25,2026-11-26,2026-12-27,2026-12-01,30% T/T deposit with order (paid). 70% balance T/T within 5 days of copy of Bill of Lading.
