@@ -1,129 +1,131 @@
 # TradeAhead
 
-FX protection and payment planning for importing SMEs in volatile-currency markets, starting with Nigeria.
-Importers owe suppliers in USD or CNY but earn in naira; a devaluation between order and payment can double
-the bill. TradeAhead converts the invoice balance in daily tranches **within the cash the firm actually has**,
-routes each tranche to the licensed dealer most likely to **deliver on time**, and pays the supplier on the
-bill of lading. No derivatives; licensed partners hold and move funds.
+🚀 **Live App:** [Launch TradeAhead Streamlit Dashboard](YOUR_STREAMLIT_URL_HERE)
 
-## Quick start
+## Overview
+
+TradeAhead is an FX planning and protection platform for importing SMEs in emerging markets, starting with Nigeria and then Egypt.
+It turns a supplier invoice into a daily currency-buying plan the business can afford, sends each purchase to the dealer most likely to deliver on time, and pays the supplier when the goods ship.
+
+## Quick Start
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-python data/generate.py      # live FX snapshot + reference data (--offline to skip the network)
-streamlit run app.py         # pytest -q runs the 28 engine and app tests
+git clone https://github.com/cdomat/TradeAhead.git && cd TradeAhead
+pip install -r requirements.txt
+streamlit run app.py
 ```
 
-## Data sourcing
+Optional: `pytest -q` runs the test suite, and `python data/generate.py` refreshes the saved FX snapshot and reference data.
 
-| Source | Content | Module |
-|---|---|---|
-| Yahoo Finance (`yfinance`) | Daily closes for the USD legs `NGN=X, EGP=X, CNY=X, EUR=X, GBP=X, CAD=X`, 2021→today | `services/fx.py` |
-| Derived | Pairs `USD/NGN, CNY/NGN, EUR/NGN, GBP/NGN, CAD/NGN` and `USD/EGP, CNY/EGP, EUR/EGP` | `services/fx.py` |
-| Curated | Devaluation events (2022–2026) annotated on the history chart | `data/fx_events.json` |
-| Simulated | 8 fictional licensed dealers and 2,080 historical fills | `data/dealers.json`, `data/dealer_fills.csv` |
-| Assumptions | Deposit rates, parallel premium, bank cost, late-payment cost, tier margins | `data/markets.json` |
+## Data Pipeline & FX Engine
 
-**Crosses.** Yahoo lists no direct naira crosses, so every pair is built from two USD legs quoted as units per USD:
-$\text{XXX/NGN}_t = \text{NGN=X}_t \,/\, \text{XXX=X}_t$. Adding a currency is one entry in `USD_LEGS` and the
-market's pair list.
+**Live rates.** `yfinance` downloads daily closing rates from Yahoo Finance for the US dollar against the naira, Egyptian pound, yuan, euro, pound sterling and Canadian dollar, from 2021 to today.
 
-**Cleaning.** Forward-fill gaps, drop weekend rows, then remove reverting spikes: a close $s_t$ is replaced by
-its centred 5-day median $\tilde s_t$ when $|s_t/\tilde s_t - 1| > 7\%$. A genuine devaluation persists, so the
-median follows it and it survives; a one-day glitch does not.
+**Pairs the app shows.** Yahoo has no direct naira or pound crosses (for example, there is no CNY/NGN). We build each one from its two dollar rates: CNY/NGN = naira per dollar ÷ yuan per dollar.
+- Naira: USD, CNY, EUR, GBP, CAD → NGN.
+- Egyptian pound: USD, CNY, EUR → EGP.
 
-**Fallback chain.** live fetch (cached 1 h in the app) → `data/fx_history.csv` snapshot → synthetic series
-anchored to the historical path (₦461 → ₦750 → ₦900 → ₦1,420 …). The UI labels which source is in use.
+Adding a currency takes one line in `services/fx.py`.
 
-**Calibration.** From log returns $r_t = \ln(s_t/s_{t-1})$:
+**Spike cleaning.** Free data feeds sometimes show one-day glitches. Each day's rate is compared with the median of the five days around it:
+- If it sits more than 7% away, it is treated as a glitch and replaced with that median.
+- A real devaluation stays at its new level, so the median moves with it and the move is kept.
 
-- *Jumps (devaluations):* days with $r_t > 5\%$ over the full history give frequency $p$, mean $\mu_J$ and
-  dispersion $\sigma_J$ (USD/NGN 2021–26: 14 jumps, $p \approx 0.009$/day, $\mu_J \approx 12\%$).
-- *Diffusion:* $\sigma$ = standard deviation of non-jump returns over the last 250 days.
-- *Drift:* default **market-implied**, which sets the expected path to grow at the interest gap
-  $g = r_{\text{local}} - r_{\text{USD}}$ (what a fair forward prices), so the plan never bets on direction:
+**Fallback chain.** If the live feed fails, the app uses the saved snapshot in `data/fx_history.csv`. If that is missing too, it uses a simulated series that follows the real historical path. The app always labels which source is in use.
 
-$$\mu = \tfrac{g}{252} - \tfrac12\sigma^2 - \ln\!\big(1 + p\,(e^{\mu_J + \sigma_J^2/2} - 1)\big)$$
+**Volatility and shocks.** History is split into two behaviours:
+- **Normal daily movement:** estimated from the last year, with recent days weighted more.
+- **Sudden devaluations:** days where the rate jumped more than 5%. These give how often they happen and how big they tend to be (USD/NGN since 2021: 14 such days, about 12% on average).
 
-  Alternatives: *historical* (jumps add drift with no offset, a stress view) and *recent* (trailing mean).
+By default, the forecast assumes the rate drifts in line with the interest-rate gap between the two currencies. This is the same assumption a fair forward price makes, so the plan never bets on which way the rate will move. On the Dashboard, users can raise volatility, make devaluations more frequent, or apply an overnight devaluation of any size on any day.
 
-**Dealer fills.** Each fill records ticket, mid, quoted and executed rate, on-time flag, filled share and delay.
-On-time probability falls with currency stress (20-day realised-volatility rank), which the Rate Index must learn.
+## Core Methodology
 
-## Engine
+### 1. Cash-Constrained Protection Plan (`engine/plan.py`)
 
-### 1 · Cash-constrained protection plan · `engine/plan.py`
+An importer owes, say, $35,000 in 20 trading days, but holds naira and cannot convert it all today. The plan decides how many dollars to buy on each day, balancing four costs:
 
-Buy $x_t \ge 0$ units of foreign currency on trading days $t = 0..N-1$ ahead of the due date $N$. With expected
-rate $F_t = \mathbb E[S_t]$, all-in conversion cost $c$, open position $U_k = A - \sum_{s \le k} x_s$ and daily
-variance $v = \sigma^2 + p(\sigma_J^2 + \mu_J^2) - p^2\mu_J^2$:
+- **FX risk:** every dollar still unbought is exposed to a devaluation, which favours buying early.
+- **Interest given up:** naira converted early stops earning local deposit interest, which favours buying late.
+- **Conversion cost:** dealer spread plus TradeAhead's margin on each purchase.
+- **Market impact:** very large single-day purchases get worse rates, which favours spreading purchases out.
 
-$$
-\min_x \;\underbrace{\sum_t x_t F_t (1+c)}_{\text{conversion}}
-+ \underbrace{\sum_t x_t F_t\,(r_{\text{local}} - r_{\text{USD}})\tfrac{N-t}{252}}_{\text{interest given up}}
-+ \underbrace{\lambda\,\tfrac{S_0\,v}{A}\sum_k U_k^2}_{\text{FX risk}}
-+ \underbrace{S_0\,\eta \sum_t x_t^2}_{\text{daily-size impact}}
-$$
+**The cash buffer is a hard rule.** The business sets a minimum operating balance, and no purchase may take cash below it. Planned purchases are costed at a pessimistic rate (a 1-in-20 bad outcome), so the buffer still holds if the naira weakens during the plan. Expected customer receipts and expenses are included day by day.
 
-$\sum_k U_k^2$ is the variance of the final cost, so the problem is the Almgren–Chriss execution trade-off with
-the importer's cash as a hard constraint:
+**If cash is not enough** to cover the whole invoice, the plan covers as much as it safely can and reports the rest as a **coverage gap**. That gap is the opening for a future financing product.
 
-- **Target:** $\sum_t x_t = \rho A$ (cover ratio $\rho$), no purchases after $N - 1 - \text{settlement}$.
-- **Buffer, never breached:** $\sum_{s \le t} x_s \tilde S_s \le C_0 - B + \sum_{s \le t}(\text{in}_s - \text{out}_s)\;\forall t$,
-  priced at a stressed rate $\tilde S_t = F_t\,e^{1.65\sqrt{v t}}\,(1 + c + \eta\,x_{\max})$, the 95% bad case.
-- **Capacity:** $0 \le x_t \le x_{\max}$; impact $\eta = 25\text{ bps} / \$50\text{k}$ of daily volume.
+**Practical tidying.** Purchases are rounded to $100, kept above a $1,000 minimum ticket, and never placed in the final settlement days.
 
-Solved with SLSQP (analytic gradients). If even buying as early as cash allows (a greedy pass) cannot reach
-$\rho A$, the target drops to that maximum and the shortfall is reported as a **coverage gap**. Tranches are then
-rounded to $100, sub-minimum tickets ($1k) roll forward, and cash is re-checked at every step. Risk appetite
-$\lambda \in \{0.3, 3, 10, 30\}$ moves the schedule from even daily buying to front-loaded.
+**Risk appetite** ("Accept risk" → "Maximum protection" on the Dashboard) controls how strongly the plan front-loads its purchases versus spreading them evenly.
 
-### 2 · Executable Rate Index and delivery-weighted routing · `engine/routing.py`
+### 2. Delivery-Weighted Routing (`engine/routing.py`)
 
-**Index (per dealer × ticket bucket <10k / 10–50k / 50–250k / 250k+).** Fill weight $w = 0.5^{\text{age}/90\text{d}}$.
+In volatile markets, the cheapest quote is often not the cheapest outcome. A dealer that delivers late or only partly fills the order forces a rushed re-purchase at a worse rate, and can make the supplier payment late.
 
-- Executable markup $m = \sum w\,(\text{exec}/\text{mid} - 1) / \sum w$, quoted markup and slippage likewise.
-- On-time probability: Beta posterior with a cautious prior (mean 0.70, strength 6):
-  $p = \dfrac{4.2 + \sum w\,\mathbb 1_{\text{on time}}}{6 + \sum w}$, plus its 5% quantile as the worst case.
-- Given a late fill: weighted mean delay $d$ and filled share $\phi$.
+**Executable Rate Index.** For every dealer and ticket size (under $10k, $10–50k, $50–250k, over $250k), we track from past trades:
+- the rate actually executed versus the rate quoted;
+- how often delivery was on time;
+- how late and how complete the late deliveries were.
 
-**Score.** For mid $M$, tier margin $\mu_{TA}$ (1.0 / 0.8 / 0.6%), slack $s$ = trading days left before the
-payment is late, fallback premium $f = 150$ bps and late cost $\ell = 0.3\%$ per day:
+Recent trades count more (a 90-day half-life). Dealers with little history start from a cautious 70% on-time assumption.
 
-$$
-\text{all-in} = M(1 + m + \mu_{TA}) + M(1-p)\Big[(1-\phi)\big(f + 0.8\,\sigma_d\sqrt d + \bar g\,d\big) + \max(d - s, 0)\,\ell\Big]
-$$
+**Ranking.** Each dealer's true cost is calculated as:
+- the executed rate, plus TradeAhead's margin, **plus the expected cost of a failed delivery**;
+- that last item covers re-buying the missing amount at short notice, plus a 0.3% cost for every day the supplier payment runs late.
 
-The second term is the expected cost of a failed fill: re-buying the unfilled share at short notice after the
-rate has moved ($0.8 \approx \mathbb E|Z|$), plus every day the supplier payment runs late. Shrinking slack
-penalises slow dealers, so the cheapest quote is often not the best route.
+The less time left before the payment is due, the more heavily unreliable dealers are penalised. On the sample invoice, Kestrel FX ranks 4th on quoted price but 1st once delivery is counted.
 
-**Allocation.** Greedy by all-in rate within each dealer's ticket limits and daily capacity; tickets above $20k
-are split so no dealer takes more than 60%. The cost **waterfall** decomposes the plan's local cost into
-mid-market + dealer spread + slippage + TradeAhead margin + expected delivery cost = all-in.
+**Splitting.** Orders over $20,000 are split so that no single dealer takes more than 60%, which limits dependence on any one counterparty. A cost waterfall shows where every naira goes: mid-market rate, dealer spread, slippage, TradeAhead margin and expected delivery cost.
 
-### 3 · Savings and Monte Carlo · `engine/market.py`, `engine/savings.py`
+### 3. Savings & Risk Simulation (`engine/market.py`, `engine/savings.py`)
 
-**Paths.** 20,000 jump-diffusion paths over the plan horizon, with devaluation-only jumps:
+We simulate **20,000 possible paths** for the exchange rate up to the payment date, including random devaluations at their historical frequency and size. On every path we cost:
 
-$$\ln S_{t+1} - \ln S_t = \varepsilon_t + B_t\max(J_t, 0),\quad \varepsilon_t \sim \mathcal N(\mu,\sigma^2),\; B_t \sim \text{Bern}(p),\; J_t \sim \mathcal N(\mu_J,\sigma_J^2)$$
+| Strategy | What it means |
+|---|---|
+| **TradeAhead plan** | The optimised daily purchases, at the routed all-in cost |
+| **Unprotected (bank)** | Buy the full amount on the due date at bank spot, plus a 2% bank cost |
+| **Unprotected (parallel market)** | Same, at the parallel-market rate (about 3.7% above official) |
+| Wait / buy all today / equal daily amounts | Simple alternatives, for comparison |
 
-Simulator sliders scale $\sigma$ and $p$ (and switch drift mode); the shock test adds a deterministic
-overnight devaluation of size $k$ on day $d$.
+**Reported results:**
+- average and typical cost, with best and worst cases;
+- the share of paths where TradeAhead is cheaper;
+- **tail savings**, the average saving in the worst 5% of currency outcomes.
 
-**Cost per path** (local currency, residual $R = A - \sum x_t$ bought on day $N$):
+The results show protection as insurance:
+- **Against a bank that delivers:** it costs slightly more on average, because naira converted early stops earning interest. It saves heavily when a devaluation hits.
+- **Against the parallel market,** where most SMEs actually buy: it is cheaper in the large majority of outcomes.
 
-$$C^{\text{plan}} = \sum_t x_t S_t\Big(1 + c + \eta x_t + (r_{\text{local}} - r_{\text{USD}})\tfrac{N-t}{252}\Big) + R\,S_N(1 + c + \eta R)$$
+## Project Architecture
 
-$c$ is the realised all-in cost of the routed plan.
+```
+TradeAhead/
+├── app.py                 Entry point: page setup, styling, top navigation
+├── views/                 One file per page
+│   ├── company.py         Landing page and FX volatility simulator
+│   ├── product.py         Interactive demos of the three core elements
+│   ├── dashboard.py       Invoice Workbench, Plan, Routing, Payments, Savings
+│   └── pricing.py         Pricing tiers and contact form
+├── engine/                Financial logic (no UI code, fully tested)
+│   ├── market.py          Volatility, devaluation model, rate simulation
+│   ├── plan.py            Cash-constrained protection plan
+│   ├── routing.py         Executable Rate Index and dealer ranking
+│   └── savings.py         Monte Carlo comparison against baselines
+├── services/              Data and glue between engine and pages
+│   ├── fx.py              Live FX fetch, cleaning, fallback
+│   ├── invoice.py         Sample invoice builder and upload reader
+│   └── workspace.py       Runs a full dashboard case and caches it
+├── ui/                    Reusable visual pieces
+│   ├── components.py      Cards, KPIs, tables, alerts
+│   └── charts.py          Branded Plotly charts
+├── data/                  FX snapshot, market assumptions, simulated dealers
+│   └── generate.py        Rebuilds every data file
+├── assets/                Stylesheet, logo, sample invoices
+└── tests/                 Engine and page tests
+```
 
-**Baselines** (full balance at the due-date rate): bank $A S_N(1 + c_{\text{bank}})$ with $c_{\text{bank}} = 2\%$;
-parallel market $A S_N(1 + c_{\text{bank}} + 3.7\%)$. Also compared: wait, buy everything today, equal daily amounts.
-
-**Reported:** mean, median, 5/95th percentiles and worst path of cost; savings $=C^{\text{base}} - C^{\text{plan}}$
-as mean, share of paths where the plan is cheaper, and **tail savings**, the mean saving on paths where $S_N$ is in
-its top 5%. Against a bank that delivers, protection costs a little on average (interest given up) and pays
-off in the tail. Against the parallel market it is cheaper in most outcomes.
+Dependencies point one way: pages → services and UI → engine. The engine can therefore be reused behind an API later without changes.
 
 ---
-Dealer names and fills are simulated; market assumptions are editable in `data/generate.py`.
+Dealer names and trade history are simulated for demonstration. FX rates are live. Market assumptions can be edited in `data/generate.py`.
