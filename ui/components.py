@@ -59,8 +59,7 @@ def pill(text: str, tone: str = "neutral") -> str:
 STATUS_TONES = {
     "Fully protected": "ok", "Partly protected": "info", "Coverage gap": "warn", "Not protected": "risk",
     "Convert": "brand", "Hold": "neutral", "Settlement": "info", "Scheduled": "neutral",
-    "Held at partner": "ok", "Paid": "ok", "Awaiting B/L": "warn", "Trade secret": "info",
-    "Patent candidate": "brand",
+    "Held at partner": "ok", "Paid": "ok", "Awaiting B/L": "warn",
 }
 
 
@@ -68,18 +67,16 @@ def status_pill(text: str) -> str:
     return pill(text, STATUS_TONES.get(text, "neutral"))
 
 
-def header(eyebrow: str, title: str, subtitle: str = "", right: str = "") -> None:
+def header(title: str, subtitle: str = "", right: str = "") -> None:
     html(f"""
     <div class="ta-header"><div>
-      <div class="ta-eyebrow">{escape(eyebrow)}</div>
       <h1>{escape(title)}</h1>
       {f'<p>{escape(subtitle)}</p>' if subtitle else ''}
     </div><div>{right}</div></div>""")
 
 
-def section(eyebrow: str, title: str, body: str = "") -> None:
-    html(f"""<div class="ta-section"><div class="ta-eyebrow">{escape(eyebrow)}</div>
-    <h2>{escape(title)}</h2>{f'<p>{body}</p>' if body else ''}</div>""")
+def section(title: str, body: str = "") -> None:
+    html(f"""<div class="ta-section"><h2>{escape(title)}</h2>{f'<p>{body}</p>' if body else ''}</div>""")
 
 
 def ticker(pair: str, value: float, change: float, source: str, as_of) -> str:
@@ -91,12 +88,12 @@ def ticker(pair: str, value: float, change: float, source: str, as_of) -> str:
 
 
 def kpis(items: list[dict]) -> None:
-    """items: {label, value, sub?, tone? ('pos'/'neg'), ink? (bool)}"""
+    """items: {label, value, sub?, tone? ('pos'/'neg'), highlight? (bool, the headline figure)}"""
     cells = []
     for k in items:
         sub = k.get("sub", "")
         tone = k.get("tone", "")
-        cells.append(f'<div class="ta-kpi{" ta-kpi--ink" if k.get("ink") else ""}">'
+        cells.append(f'<div class="ta-kpi{" ta-kpi--highlight" if k.get("highlight") else ""}">'
                      f'<div class="ta-kpi__label">{escape(k["label"])}</div>'
                      f'<div class="ta-kpi__value">{k["value"]}</div>'
                      f'<div class="ta-kpi__sub {tone}">{sub}</div></div>')
@@ -127,17 +124,16 @@ def steps(items: list[tuple[str, str, str]]) -> None:
 
 
 def empty(title: str, body: str) -> None:
-    html(f'<div class="ta-empty"><div class="ta-eyebrow">Nothing here yet</div>'
-         f'<h3>{escape(title)}</h3><p>{body}</p></div>')
+    html(f'<div class="ta-empty"><h3>{escape(title)}</h3><p>{body}</p></div>')
 
 
 def alert(body: str, tone: str = "info") -> None:
     html(f'<div class="ta-alert ta-alert--{tone}">{body}</div>')
 
 
-def card(title: str, body: str, eyebrow: str = "", extra: str = "", ink: bool = False) -> str:
-    return (f'<div class="ta-card{" ta-card--ink" if ink else ""}">'
-            f'{f"<div class=ta-eyebrow>{escape(eyebrow)}</div>" if eyebrow else ""}'
+def card(title: str, body: str, extra: str = "", icon: str = "") -> str:
+    """A light card. `icon` is a short glyph shown in a tinted square above the title."""
+    return (f'<div class="ta-card">{f"<div class=ta-icon>{icon}</div>" if icon else ""}'
             f'<h3>{escape(title)}</h3><p>{body}</p>{extra}</div>')
 
 

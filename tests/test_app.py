@@ -43,7 +43,7 @@ def test_static_pages(name):
 
 def test_dashboard_blank_has_no_plan():
     at = run("dashboard")
-    assert "Nothing here yet" in " ".join(m.value for m in at.markdown)
+    assert "ta-empty" in " ".join(m.value for m in at.markdown)
 
 
 @pytest.mark.parametrize("extra", [

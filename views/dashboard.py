@@ -63,7 +63,7 @@ def render() -> None:
     pair = f"{ccy}/{local}" if f"{ccy}/{local}" in m["pairs"] else m["default_pair"]
     v, chg, as_of = workspace.latest(pair)
     _, source = workspace.fx_history()
-    ui.header("Dashboard", "Protection workspace",
+    ui.header("Protection workspace",
               "Enter a supplier invoice and your cash position. The plan, routing, payment and savings views "
               "update as you change the simulator on the left.",
               right=ui.ticker(pair, v, chg, "live" if "live" in source else source.lower(), as_of))
@@ -97,7 +97,7 @@ def _sidebar(ref) -> tuple[str, Sim]:
     sb = st.sidebar
     sb.markdown("### Scenario simulator")
     sb.caption("Every change re-runs the plan, routing and 20,000 rate paths.")
-    labels = {"NG": "🇳🇬 Nigeria · pilot", "EG": "🇪🇬 Egypt · year 3"}
+    labels = {"NG": "🇳🇬 Nigeria", "EG": "🇪🇬 Egypt"}
     market_code = sb.radio("Market", list(labels), format_func=labels.get, key=_key("market", "NG"), horizontal=True)
 
     sb.markdown('<div class="ta-side-label">Protection</div>', unsafe_allow_html=True)
@@ -137,7 +137,7 @@ def _workbench(ref, m) -> None:
     left, right = st.columns([1.35, 1], gap="large")
 
     with left, st.container(key="card_invoice"):
-        ui.html('<div class="ta-eyebrow">Step 1</div><h3 style="margin:.2rem 0 .6rem">Supplier invoice</h3>')
+        ui.html('<h3 style="margin:0 0 .6rem;font-size:18px">1. Supplier invoice</h3>')
         up = st.file_uploader("Upload a proforma or commercial invoice (PDF or CSV)", type=["pdf", "csv"],
                               key="uploader")
         pdf, csv_bytes = _sample_files(date.today())
@@ -175,7 +175,7 @@ def _workbench(ref, m) -> None:
                 for k, c in conf.items()) + "</p>")
 
     with right, st.container(key="card_cash"):
-        ui.html('<div class="ta-eyebrow">Step 2</div><h3 style="margin:.2rem 0 .6rem">Cash position</h3>')
+        ui.html('<h3 style="margin:0 0 .6rem;font-size:18px">2. Cash position</h3>')
         s = ui.sym(local)
         st.number_input(f"Cash on hand today ({s})", min_value=0.0, value=None, step=1e6, format="%.0f",
                         key=_key("cash"), placeholder="e.g. 60,000,000")
@@ -257,7 +257,7 @@ def _plan_tab(res, inv, cash, ref, m, sim) -> None:
     headroom = (sched["cash_after"] - sched["buffer"]).min()
     ui.kpis([
         {"label": "Plan status", "value": ui.status_pill(p.status),
-         "sub": f"{res['n']} trading days to {inv['due_date']:%d %b}", "ink": True},
+         "sub": f"{res['n']} trading days to {inv['due_date']:%d %b}", "highlight": True},
         {"label": "Protected before the due date", "value": ui.money(p.planned_fx, ccy),
          "sub": f"{p.planned_fx / float(inv['balance']):.0%} of the balance"},
         {"label": "Exchange-rate risk removed", "value": ui.pct(p.risk_reduction, decimals=0),
@@ -273,7 +273,7 @@ def _plan_tab(res, inv, cash, ref, m, sim) -> None:
                      f"{ui.money(cash['buffer'], local, short=True)} buffer. The rest is bought at the spot rate "
                      f"on the due date, unprotected.", "warn")
         with c2:
-            ui.html(f"""<div class="ta-locked"><div class="ta-eyebrow">Coming in year 4</div>
+            ui.html(f"""<div class="ta-locked"><span class="ta-muted">Coming soon</span>
             <b>Finance the gap</b><p class="ta-muted" style="margin:.2rem 0 0">A partner lender funds the missing
             {ui.money(p.coverage_gap_fx, ccy)}, priced on your payment history with TradeAhead.</p></div>""")
     for n in p.notes:
@@ -320,7 +320,7 @@ def _routing_tab(res, inv, cash, ref, m, sim) -> None:
     best = ranking.loc[ranking["route_rank"] == 1, "dealer"].item() if not ranking.empty else "—"
     ui.kpis([
         {"label": "All-in cost over mid-market", "value": f"{res['all_in'] * 1e4:,.0f} bps",
-         "sub": f"incl. {res['margin']:.1%} TradeAhead margin ({sim.tier})", "ink": True},
+         "sub": f"incl. {res['margin']:.1%} TradeAhead margin ({sim.tier})", "highlight": True},
         {"label": "Expected on-time delivery", "value": ui.pct(on_time, decimals=0), "sub": "value-weighted"},
         {"label": "Cheapest quote", "value": cheapest, "sub": "rank 1 on screen price"},
         {"label": "Best delivery-weighted route", "value": best, "sub": "rank 1 after delivery risk"},
@@ -379,7 +379,7 @@ def _payments_tab(res, inv, cash, ref, m, sim) -> None:
     held_now = sched.loc[pd.to_datetime(sched["date"]) < pd.Timestamp(today), "buy_fx"].sum()
     ui.kpis([
         {"label": "Payment status", "value": ui.status_pill("Paid" if received else "Awaiting B/L"),
-         "sub": "released automatically on the B/L copy", "ink": True},
+         "sub": "released automatically on the B/L copy", "highlight": True},
         {"label": "Held at partner today", "value": ui.money(held_now, ccy), "sub": "settled conversions"},
         {"label": "Scheduled by due date", "value": ui.money(p.planned_fx, ccy), "sub": "after all conversions settle"},
         {"label": "Bought at spot on the due date", "value": ui.money(p.residual_fx, ccy),
@@ -395,7 +395,7 @@ def _payments_tab(res, inv, cash, ref, m, sim) -> None:
         ui.html("<b>Supplier payment</b>")
         if received:
             ref_no = f"TA-{inv['due_date']:%y%m%d}-{abs(hash(inv['invoice_no'] or '')) % 10_000:04d}"
-            ui.html(f"""<div class="ta-card"><div class="ta-eyebrow">Payment released</div>
+            ui.html(f"""<div class="ta-card"><span class="ta-muted">Payment released</span>
             <h3>{ui.money(float(inv['balance']), ccy, decimals=2)}</h3>
             <p>To <b>{inv['supplier']}</b><br>Invoice {inv['invoice_no'] or '—'}<br>Reference {ref_no}<br>
             Value date {max(inv['bl_date'], today):%d %b %Y}</p>
@@ -404,7 +404,7 @@ def _payments_tab(res, inv, cash, ref, m, sim) -> None:
                 st.session_state[bl_key] = False
                 st.rerun()
         else:
-            ui.html(f"""<div class="ta-card"><div class="ta-eyebrow">Payment instruction</div>
+            ui.html(f"""<div class="ta-card"><span class="ta-muted">Payment instruction</span>
             <h3>{ui.money(float(inv['balance']), ccy, decimals=2)}</h3>
             <p>To <b>{inv['supplier']}</b><br>Trigger: copy of bill of lading (expected {inv['bl_date']:%d %b})<br>
             Deadline: {inv['due_date']:%d %b %Y}</p></div>""")
@@ -432,7 +432,7 @@ def _savings_tab(res, inv, cash, ref, m, sim) -> None:
     sb, sp = comp["savings"]["Unprotected (bank)"], comp["savings"]["Unprotected (parallel market)"]
     ui.kpis([
         {"label": "Saving in the worst 5% of outcomes", "value": ui.money(sb["tail_savings"], local, short=True),
-         "sub": f"{sb['tail_savings_pct']:+.1%} vs. unprotected bank purchase", "ink": True},
+         "sub": f"{sb['tail_savings_pct']:+.1%} vs. unprotected bank purchase", "highlight": True},
         {"label": f"Saving in a +{sim.shock:.0%} shock on day {sim.shock_day}",
          "value": ui.money(shock["savings"]["Unprotected (bank)"], local, short=True),
          "sub": f"{shock['savings_pct']['Unprotected (bank)']:+.1%} vs. bank",

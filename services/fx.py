@@ -18,7 +18,7 @@ SNAPSHOT = ROOT / "data" / "fx_history.csv"
 # Units of each currency per 1 USD, as Yahoo lists them.
 USD_LEGS = {"NGN": "NGN=X", "EGP": "EGP=X", "CNY": "CNY=X", "EUR": "EUR=X", "GBP": "GBP=X", "CAD": "CAD=X"}
 
-# Pilot market: five foreign currencies Nigerian importers pay in, quoted in naira.
+# Nigeria: five foreign currencies Nigerian importers pay in, quoted in naira.
 NGN_PAIRS = ["USD/NGN", "CNY/NGN", "EUR/NGN", "GBP/NGN", "CAD/NGN"]
 EGP_PAIRS = ["USD/EGP", "CNY/EGP", "EUR/EGP"]
 ALL_PAIRS = NGN_PAIRS + EGP_PAIRS

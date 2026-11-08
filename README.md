@@ -104,7 +104,7 @@ TradeAhead/
 ├── app.py                 Entry point: page setup, styling, top navigation
 ├── views/                 One file per page
 │   ├── company.py         Landing page and FX volatility simulator
-│   ├── product.py         Interactive demos of the three core elements
+│   ├── product.py         Feature guide with live demos
 │   ├── dashboard.py       Invoice Workbench, Plan, Routing, Payments, Savings
 │   └── pricing.py         Pricing tiers and contact form
 ├── engine/                Financial logic (no UI code, fully tested)
