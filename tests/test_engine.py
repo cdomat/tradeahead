@@ -101,9 +101,19 @@ def test_waterfall_adds_up(ref):
     parts = sum(v for k, v in wf.items() if k != "All-in cost")
     assert parts == pytest.approx(wf["All-in cost"], rel=1e-9)
     assert legs["amount_fx"].sum() == pytest.approx(r.planned_fx, abs=1)
-    big = legs.groupby("day")["amount_fx"].transform("sum") > 20_000
-    share = legs["amount_fx"] / legs.groupby("day")["amount_fx"].transform("sum")
+    day_total = legs.groupby("day")["amount_fx"].sum()
+    per_dealer = legs.groupby(["day", "dealer_id"])["amount_fx"].sum()
+    share = per_dealer / day_total.reindex(per_dealer.index.get_level_values("day")).to_numpy()
+    big = day_total.reindex(per_dealer.index.get_level_values("day")).to_numpy() > 20_000
     assert (share[big] <= 0.6 + 1e-9).all()
+
+
+def test_large_ticket_spread_across_dealers(ref):
+    ctx = routing.RouteContext(mid=1345, slack_days=10, daily_vol=0.01, margin=0.008)
+    legs = routing.route_ticket(30_500, ctx, ref["eri"], ref["dealers"], "NG", ref["mk"]["buckets"], max_share=0.6)
+    assert legs["amount_fx"].sum() == pytest.approx(30_500, abs=1)
+    assert legs.groupby("dealer_id")["amount_fx"].sum().max() <= 0.6 * 30_500 + 1e-6
+    assert legs["dealer_id"].nunique() >= 2
 
 
 def test_protection_pays_in_a_shock(ref):

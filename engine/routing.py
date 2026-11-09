@@ -135,6 +135,8 @@ def route_ticket(ticket: float, ctx: RouteContext, eri: pd.DataFrame, dealers: l
     """
     used = used_capacity if used_capacity is not None else {}
     remaining, legs = float(ticket), []
+    cap = max(ticket * max_share, 1.0)  # most any one dealer may take of this ticket
+    this_ticket: dict[str, float] = {}
     for _ in range(10):
         if remaining < 1:
             break
@@ -146,7 +148,7 @@ def route_ticket(ticket: float, ctx: RouteContext, eri: pd.DataFrame, dealers: l
         placed = False
         for _, r in ranked.iterrows():
             room = r["daily_capacity"] - used.get(r["dealer_id"], 0.0)
-            size = min(remaining, r["max_ticket"], room, max(ticket * max_share, 1.0))
+            size = min(remaining, r["max_ticket"], room, cap - this_ticket.get(r["dealer_id"], 0.0))
             if size < 1:
                 continue
             leg = score_dealers(size, ctx, eri, dealers, market, buckets)
@@ -155,6 +157,7 @@ def route_ticket(ticket: float, ctx: RouteContext, eri: pd.DataFrame, dealers: l
                 continue
             legs.append(leg.iloc[0].to_dict() | {"amount_fx": size})
             used[r["dealer_id"]] = used.get(r["dealer_id"], 0.0) + size
+            this_ticket[r["dealer_id"]] = this_ticket.get(r["dealer_id"], 0.0) + size
             remaining -= size
             placed = True
             break

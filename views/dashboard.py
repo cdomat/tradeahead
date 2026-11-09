@@ -67,11 +67,11 @@ def render() -> None:
     v, chg, as_of = workspace.latest(pair)
     _, source = workspace.fx_history()
     ui.header("Protection workspace",
-              "Enter a supplier invoice and your cash position. The plan, routing, payment and savings views "
-              "update as you change the simulator on the left.",
+              "Enter a supplier invoice and your cash position to get your protection plan. "
+              "You can change the plan settings on the left at any time.",
               right=ui.ticker(pair, v, chg, "live" if "live" in source else source.lower(), as_of))
 
-    tabs = st.tabs(["Invoice Workbench", "Protection Plan", "Routing", "Payments", "Savings"])
+    tabs = st.tabs(["Invoice & cash", "Your plan", "Dealers", "Payment", "Savings"])
     with tabs[0]:
         _workbench(ref, m)
 
@@ -86,7 +86,7 @@ def render() -> None:
         with tab:
             if res is None:
                 ui.empty("Add " + missing + " to continue",
-                         "Fill in the Invoice Workbench tab. Upload a supplier invoice or download the sample "
+                         "Fill in the Invoice & cash tab. Upload a supplier invoice or download the sample "
                          "to try it.")
             elif "error" in res:
                 ui.alert(res["error"], "warn")
@@ -98,8 +98,7 @@ def render() -> None:
 
 def _sidebar(ref) -> tuple[str, Sim]:
     sb = st.sidebar
-    sb.markdown("### Scenario simulator")
-    sb.caption("Every change re-runs the plan, routing and 20,000 rate paths.")
+    sb.markdown("### Plan settings")
     if len(LIVE_MARKETS) > 1:
         market_code = sb.radio("Market", list(LIVE_MARKETS), format_func=LIVE_MARKETS.get,
                                key=_key("market", "NG"), horizontal=True)
@@ -107,24 +106,25 @@ def _sidebar(ref) -> tuple[str, Sim]:
         market_code = next(iter(LIVE_MARKETS))
         sb.caption(f"Market: {LIVE_MARKETS[market_code]}")
 
-    sb.markdown('<div class="ta-side-label">Protection</div>', unsafe_allow_html=True)
-    cover = sb.slider("Share of the balance to protect", 0, 100, step=5, format="%d%%", key=_key("cover", 100))
+    cover = sb.slider("How much of the balance to protect", 0, 100, step=5, format="%d%%", key=_key("cover", 100))
     risk = sb.select_slider("Risk appetite", list(RISK_LEVELS), key=_key("risk", "Balanced"),
-                            help="Higher protection buys earlier: less exchange-rate risk, more interest given up.")
-    tier = sb.radio("Plan tier", list(ref["tiers"]), key=_key("tier", "Growth"), horizontal=True,
-                    help="Sets TradeAhead's FX margin: Starter 1.0%, Growth 0.8%, Pro 0.6%.")
+                            help="More protection buys earlier: less exchange-rate risk, more interest given up.")
+    tier = sb.radio("Your TradeAhead plan", list(ref["tiers"]), key=_key("tier", "Growth"), horizontal=True,
+                    help="Sets the TradeAhead fee per conversion: Starter 1.0%, Growth 0.8%, Pro 0.6%.")
 
-    sb.markdown('<div class="ta-side-label">Market stress</div>', unsafe_allow_html=True)
-    drift = sb.selectbox("Rate outlook", list(DRIFT_LABELS), format_func=DRIFT_LABELS.get, key=_key("drift", "implied"))
-    vol = sb.slider("Day-to-day volatility", 0.5, 3.0, step=0.25, format="%.2f×", key=_key("vol", 1.0))
-    jump = sb.slider("Devaluation risk", 0.0, 4.0, step=0.25, format="%.2f×", key=_key("jump", 1.0),
-                     help="Multiplies how often sudden devaluations happen, versus 2021–2026 history.")
+    sb.markdown('<div class="ta-side-label">What if the naira falls overnight?</div>', unsafe_allow_html=True)
+    shock = sb.slider("Sudden fall", 0, 60, step=5, format="%d%%", key=_key("shock", 30))
+    shock_day = sb.slider("Trading days from now", 1, 30, key=_key("shock_day", 5))
 
-    sb.markdown('<div class="ta-side-label">Shock test</div>', unsafe_allow_html=True)
-    shock = sb.slider("Overnight devaluation", 0, 60, step=5, format="+%d%%", key=_key("shock", 30))
-    shock_day = sb.slider("On trading day", 1, 30, key=_key("shock_day", 5))
+    with sb.expander("Advanced market assumptions"):
+        drift = st.selectbox("Rate outlook", list(DRIFT_LABELS), format_func=DRIFT_LABELS.get,
+                             key=_key("drift", "implied"))
+        vol = st.slider("Day-to-day volatility", 0.5, 3.0, step=0.25, format="%.2f×", key=_key("vol", 1.0))
+        jump = st.slider("How often devaluations happen", 0.0, 4.0, step=0.25, format="%.2f×",
+                         key=_key("jump", 1.0), help="Compared with naira history since 2021.")
     _save("market", "cover", "risk", "tier", "drift", "vol", "jump", "shock", "shock_day")
 
+    sb.write("")
     if sb.button("Reset workspace", width="stretch"):
         st.session_state.pop("_dash", None)
         for k in list(st.session_state):
@@ -166,7 +166,7 @@ def _workbench(ref, m) -> None:
         b.text_input("Invoice number", key=_key("invoice_no"), placeholder="e.g. PI-2026-0417")
         a, b = st.columns(2)
         a.selectbox("Invoice currency", currencies, index=None, key=_key("ccy"), placeholder="Choose currency",
-                    help=f"Currencies quoted against the {local} in this market. Edit services/fx.py to add more.")
+                    help=f"Currencies we can buy with {local}.")
         b.number_input("Balance still to pay", min_value=0.0, value=None, step=1_000.0, format="%.2f",
                        key=_key("balance"), placeholder="e.g. 34,905.50")
         a, b = st.columns(2)
@@ -201,7 +201,7 @@ def _workbench(ref, m) -> None:
                 (ui.pill("Cash position complete", "ok") if cash else ui.pill("Cash position incomplete", "warn")) +
                 "</p>")
         if inv and cash:
-            ui.alert("Your plan is ready. Open <b>Protection Plan</b> above.", "ok")
+            ui.alert("Your plan is ready. Open <b>Your plan</b> above.", "ok")
 
 
 @st.cache_data(show_spinner=False)
@@ -261,111 +261,103 @@ def _cash() -> dict | None:
 def _plan_tab(res, inv, cash, ref, m, sim) -> None:
     p, ccy, local = res["plan"], res["ccy"], res["local"]
     sched = p.schedule
-    headroom = (sched["cash_after"] - sched["buffer"]).min()
     ui.kpis([
         {"label": "Plan status", "value": ui.status_pill(p.status),
          "sub": f"{res['n']} trading days to {inv['due_date']:%d %b}", "highlight": True},
         {"label": "Protected before the due date", "value": ui.money(p.planned_fx, ccy),
          "sub": f"{p.planned_fx / float(inv['balance']):.0%} of the balance"},
         {"label": "Exchange-rate risk removed", "value": ui.pct(p.risk_reduction, decimals=0),
-         "sub": f"cost uncertainty {ui.money(p.cost_std_local, local, short=True)} vs. {ui.money(p.unprotected_std_local, local, short=True)}"},
-        {"label": "Interest given up", "value": ui.money(p.carry_cost_local, local, short=True),
-         "sub": f"lowest headroom above buffer {ui.money(headroom, local, short=True)}"},
+         "sub": "compared with buying everything on the due date"},
+        {"label": "Cost of buying early", "value": ui.money(p.carry_cost_local, local, short=True),
+         "sub": f"interest your {local} would have earned"},
     ])
     if p.coverage_gap_fx > 1:
         c1, c2 = st.columns([1.6, 1])
         with c1:
             ui.alert(f"<b>Coverage gap: {ui.money(p.coverage_gap_fx, ccy)}.</b> Your cash can fund "
-                     f"{p.planned_fx / p.target_fx:.0%} of the target without touching the "
-                     f"{ui.money(cash['buffer'], local, short=True)} buffer. The rest is bought at the spot rate "
-                     f"on the due date, unprotected.", "warn")
+                     f"{p.planned_fx / p.target_fx:.0%} of the target without touching your "
+                     f"{ui.money(cash['buffer'], local, short=True)} buffer. The rest is bought on the due date "
+                     f"at that day's rate.", "warn")
         with c2:
             ui.html(f"""<div class="ta-locked"><span class="ta-muted">Coming soon</span>
             <b>Finance the gap</b><p class="ta-muted" style="margin:.2rem 0 0">A partner lender funds the missing
-            {ui.money(p.coverage_gap_fx, ccy)}, priced on your payment history with TradeAhead.</p></div>""")
-    for n in p.notes:
-        if "Cash covers" not in n:
-            ui.alert(n, "info")
+            {ui.money(p.coverage_gap_fx, ccy)}.</p></div>""")
     if sim.tier == "Starter":
         ui.alert("Protection plans are part of <b>Growth</b> and <b>Pro</b>. On Starter you would convert "
                  "manually; this preview shows what the plan would do.", "info")
 
     l, r = st.columns(2, gap="large")
     with l:
-        ui.html("<b>Daily dollar accumulation</b>" if ccy == "USD" else f"<b>Daily {ccy} accumulation</b>")
+        ui.html(f"<b>{'Dollars' if ccy == 'USD' else ccy} bought over time</b>")
         st.plotly_chart(charts.accumulation(sched, p.target_fx, float(inv["balance"]), ccy),
                         config=charts.CONFIG, theme=None, width="stretch")
     with r:
-        ui.html("<b>Cash after purchases vs. buffer</b> <span class='ta-muted'>(at expected rates)</span>")
+        ui.html("<b>Your cash stays above the buffer</b>")
         st.plotly_chart(charts.cash_vs_buffer(sched, cash["buffer"], local), config=charts.CONFIG, theme=None, width="stretch")
 
-    ui.html("<b>Conversion schedule</b>")
-    rows = []
-    for r in sched.itertuples():
-        rows.append([f"{pd.Timestamp(r.date):%a %d %b}", ui.status_pill(r.status),
-                     ui.money(r.buy_fx, ccy) if r.buy_fx else "—", ui.rate(r.expected_rate),
-                     ui.money(r.local_needed, local) if r.local_needed else "—",
-                     f"{ui.bar(r.coverage)}{r.coverage:.0%}", ui.money(r.cash_after, local, short=True),
-                     ui.money(r.cash_after - r.buffer, local, short=True)])
-    ui.table([("Date", ""), ("Action", ""), (f"Buy ({ccy})", "r"), ("Expected rate", "r"),
-              (f"Cost ({local})", "r"), ("Protected", ""), ("Cash after", "r"), ("Above buffer", "r")], rows,
-             highlight={i for i, r in enumerate(sched.itertuples()) if r.buy_fx > 0})
+    buys = sched[sched["buy_fx"] > 0]
+    ui.html(f"<b>Purchase schedule</b> <span class='ta-muted'>· {len(buys)} purchases</span>")
+    ui.table([("Date", ""), (f"Buy ({ccy})", "r"), ("Expected rate", "r"), (f"Cost ({local})", "r"),
+              ("Protected so far", ""), ("Cash above buffer", "r")],
+             [[f"{pd.Timestamp(r.date):%a %d %b}", ui.money(r.buy_fx, ccy), ui.rate(r.expected_rate),
+               ui.money(r.local_needed, local, short=True), f"{ui.bar(r.coverage)}{r.coverage:.0%}",
+               ui.money(r.cash_after - r.buffer, local, short=True)] for r in buys.itertuples()])
     if p.residual_fx > 1:
-        ui.html(f"<p class='ta-muted'>{ui.money(p.residual_fx, ccy)} is left to buy at the spot rate on "
-                f"the due date.</p>")
+        ui.html(f"<p class='ta-muted'>{ui.money(p.residual_fx, ccy)} is left to buy on the due date at that "
+                f"day's rate.</p>")
 
 
-# ---------------------------------------------------------------- tab 3: routing
+# ---------------------------------------------------------------- tab 3: dealers
 
 def _routing_tab(res, inv, cash, ref, m, sim) -> None:
     legs, ranking, wf, local = res["legs"], res["ranking"], res["waterfall"], res["local"]
     if legs.empty:
-        ui.empty("No purchases to route", "The plan does not buy anything before the due date with these settings.")
+        ui.empty("No purchases to place", "The plan does not buy anything before the due date with these settings.")
         return
     on_time = (legs["amount_fx"] * legs["on_time_p"]).sum() / legs["amount_fx"].sum()
-    cheapest = ranking.loc[ranking["screen_rank"] == 1, "dealer"].item() if not ranking.empty else "—"
-    best = ranking.loc[ranking["route_rank"] == 1, "dealer"].item() if not ranking.empty else "—"
     ui.kpis([
-        {"label": "All-in cost over mid-market", "value": f"{res['all_in'] * 1e4:,.0f} bps",
-         "sub": f"incl. {res['margin']:.1%} TradeAhead margin ({sim.tier})", "highlight": True},
-        {"label": "Expected on-time delivery", "value": ui.pct(on_time, decimals=0), "sub": "value-weighted"},
-        {"label": "Cheapest quote", "value": cheapest, "sub": "rank 1 on screen price"},
-        {"label": "Best delivery-weighted route", "value": best, "sub": "rank 1 after delivery risk"},
+        {"label": "Total conversion cost", "value": ui.pct(res["all_in"], decimals=2),
+         "sub": f"above the mid-market rate, incl. {res['margin']:.1%} TradeAhead fee", "highlight": True},
+        {"label": "Expected on-time delivery", "value": ui.pct(on_time, decimals=0), "sub": "across all purchases"},
+        {"label": "Dealers used", "value": f"{legs['dealer'].nunique()}", "sub": f"{len(legs)} purchases in total"},
     ])
-    if ranking.empty:
-        return
-    first = res["plan"].schedule.query("buy_fx > 0").iloc[0]
-    ui.html(f"<b>Dealer ranking for the first purchase</b> <span class='ta-muted'>· "
-            f"{pd.Timestamp(first['date']):%a %d %b}, {ui.money(first['buy_fx'] * res['usd_per_unit'], 'USD')} "
-            f"· {ranking['bucket'].iloc[0]} ticket</span>")
-    st.plotly_chart(charts.rank_slope(ranking), config=charts.CONFIG, theme=None, width="stretch")
-    rows = []
-    for r in ranking.itertuples():
-        arrow = "" if r.route_rank == r.screen_rank else (
-            f" <span class='pos'>▲{r.screen_rank - r.route_rank}</span>" if r.route_rank < r.screen_rank
-            else f" <span class='neg'>▼{r.route_rank - r.screen_rank}</span>")
-        rows.append([f"<b>{r.dealer}</b><br><span class='ta-muted'>{r.type}</span>",
-                     f"<span class='ta-rank'>{r.screen_rank}</span> {ui.rate(r.screen_rate)}",
-                     ui.rate(r.executable_rate), f"{ui.bar(r.on_time_p)}{r.on_time_p:.0%}",
-                     f"{r.late_delay_days:.1f} days", ui.rate(r.delivery_cost),
-                     f"<b>{ui.rate(r.all_in_rate)}</b>",
-                     f"<span class='ta-rank{' ta-rank--best' if r.route_rank == 1 else ''}'>{r.route_rank}</span>{arrow}"])
-    ui.table([("Dealer", ""), ("Quoted (rank)", ""), ("Executable", "r"), ("On time", ""), ("Avg delay if late", "r"),
-              ("Delivery cost", "r"), ("All-in", "r"), ("Route rank", "")], rows,
-             highlight={i for i, r in enumerate(ranking.itertuples()) if r.route_rank == 1})
-    ui.html(f"<p class='ta-muted'>Rates in {local} per USD. Delivery cost = (1 − on-time probability) × "
-            f"cost of a failed fill: re-buying at short notice plus each day the supplier payment is late.</p>")
 
-    ui.html("<b>Dealer liquidity waterfall</b> <span class='ta-muted'>· whole plan, from mid-market cost to "
-            "all-in cost</span>")
-    st.plotly_chart(charts.waterfall(wf, local), config=charts.CONFIG, theme=None, width="stretch")
-    with st.expander(f"Route log · {len(legs)} conversions"):
-        ui.table([("Date", ""), ("Dealer", ""), ("USD", "r"), ("All-in", "r"), ("On time", "r")],
-                 [[f"{pd.Timestamp(x.date):%d %b}", x.dealer, f"{x.amount_fx:,.0f}", ui.rate(x.all_in_rate),
-                   f"{x.on_time_p:.0%}"] for x in legs.itertuples()])
+    if not ranking.empty:
+        cheapest = ranking.loc[ranking["screen_rank"] == 1].iloc[0]
+        best = ranking.loc[ranking["route_rank"] == 1].iloc[0]
+        if cheapest["dealer"] != best["dealer"]:
+            ui.alert(f"<b>{cheapest['dealer']}</b> quotes the lowest rate, but <b>{best['dealer']}</b> delivers on "
+                     f"time more often ({best['on_time_p']:.0%} vs. {cheapest['on_time_p']:.0%}). Once the cost of a "
+                     f"late delivery is counted, {best['dealer']} is cheaper, so we use it first.", "info")
+        ui.html("<b>How we chose the dealer for your first purchase</b>")
+        ui.table([("Dealer", ""), ("Quoted rate", "r"), ("On-time record", ""), ("Rank by quote", "c"),
+                  ("Our rank", "c")],
+                 [[f"<b>{r.dealer}</b>", ui.rate(r.screen_rate), f"{ui.bar(r.on_time_p)}{r.on_time_p:.0%}",
+                   f"{r.screen_rank}",
+                   f"<span class='ta-rank{' ta-rank--best' if r.route_rank == 1 else ''}'>{r.route_rank}</span>"]
+                  for r in ranking.itertuples()],
+                 highlight={i for i, r in enumerate(ranking.itertuples()) if r.route_rank == 1})
+        ui.html(f"<p class='ta-muted'>Rates in {local} per US dollar.</p>")
+
+    split = legs.groupby("dealer", as_index=False).agg(n=("amount_fx", "size"), usd=("amount_fx", "sum"))
+    split = split.sort_values("usd", ascending=False)
+    ui.html("<b>Where your purchases go</b>")
+    ui.table([("Dealer", ""), ("Purchases", "r"), ("Amount (USD)", "r"), ("Share", "")],
+             [[r.dealer, f"{r.n}", f"{r.usd:,.0f}", f"{ui.bar(r.usd / split['usd'].sum())}{r.usd / split['usd'].sum():.0%}"]
+              for r in split.itertuples()])
+
+    with st.expander("Where the conversion cost comes from"):
+        mid = wf["Mid-market cost"]
+        parts = [("Dealer spread and slippage", wf["Dealer spread"] + wf["Execution slippage"]),
+                 ("TradeAhead fee", wf["TradeAhead margin"]),
+                 ("Allowance for late deliveries", wf["Expected delivery cost"])]
+        ui.table([("Part", ""), (f"Cost ({local})", "r"), ("Share of mid-market value", "r")],
+                 [[n, ui.money(v, local, short=True), ui.pct(v / mid, decimals=2)] for n, v in parts] +
+                 [["<b>Total above mid-market</b>", f"<b>{ui.money(wf['All-in cost'] - mid, local, short=True)}</b>",
+                   f"<b>{ui.pct((wf['All-in cost'] - mid) / mid, decimals=2)}</b>"]])
 
 
-# ---------------------------------------------------------------- tab 4: payments
+# ---------------------------------------------------------------- tab 4: payment
 
 def _payments_tab(res, inv, cash, ref, m, sim) -> None:
     p, ccy = res["plan"], res["ccy"]
@@ -378,58 +370,50 @@ def _payments_tab(res, inv, cash, ref, m, sim) -> None:
         ("Deposit paid", "with the order" if inv.get("deposit_paid") else "not confirmed",
          "done" if inv.get("deposit_paid") else ""),
         ("Plan approved", f"{res['start']:%d %b}", "done"),
-        ("Converting", f"until {last_buy:%d %b}" if last_buy is not None else "nothing to convert",
+        ("Buying currency", f"until {last_buy:%d %b}" if last_buy is not None else "nothing to buy",
          "done" if converting_done or received else "now"),
-        ("B/L copy received", f"expected {inv['bl_date']:%d %b}", "done" if received else ""),
+        ("Bill of lading received", f"expected {inv['bl_date']:%d %b}", "done" if received else ""),
         ("Supplier paid", f"latest {inv['due_date']:%d %b}", "done" if received else ""),
     ])
-    held_now = sched.loc[pd.to_datetime(sched["date"]) < pd.Timestamp(today), "buy_fx"].sum()
-    ui.kpis([
-        {"label": "Payment status", "value": ui.status_pill("Paid" if received else "Awaiting B/L"),
-         "sub": "released automatically on the B/L copy", "highlight": True},
-        {"label": "Held at partner today", "value": ui.money(held_now, ccy), "sub": "settled conversions"},
-        {"label": "Scheduled by due date", "value": ui.money(p.planned_fx, ccy), "sub": "after all conversions settle"},
-        {"label": "Bought at spot on the due date", "value": ui.money(p.residual_fx, ccy),
-         "sub": "unprotected remainder"},
-    ])
-    l, r = st.columns([1.5, 1], gap="large")
+
+    l, r = st.columns([1, 1.5], gap="large")
     with l:
-        ui.html("<b>Funds held vs. bill of lading trigger</b>")
-        st.plotly_chart(charts.held_vs_trigger(sched[sched["buy_fx"] > 0] if p.planned_fx else sched,
-                                               float(inv["balance"]), inv["bl_date"], inv["due_date"], ccy),
-                        config=charts.CONFIG, theme=None, width="stretch")
-    with r:
-        ui.html("<b>Supplier payment</b>")
         if received:
             ref_no = f"TA-{inv['due_date']:%y%m%d}-{abs(hash(inv['invoice_no'] or '')) % 10_000:04d}"
             ui.html(f"""<div class="ta-card"><span class="ta-muted">Payment released</span>
             <h3>{ui.money(float(inv['balance']), ccy, decimals=2)}</h3>
             <p>To <b>{inv['supplier']}</b><br>Invoice {inv['invoice_no'] or '—'}<br>Reference {ref_no}<br>
             Value date {max(inv['bl_date'], today):%d %b %Y}</p>
-            <p style="margin-top:.6rem">{ui.pill('Simulated', 'neutral')}</p></div>""")
+            <p style="margin-top:.6rem">{ui.status_pill('Paid')} {ui.pill('Simulated', 'neutral')}</p></div>""")
             if st.button("Undo", key="bl_undo"):
                 st.session_state[bl_key] = False
                 st.rerun()
         else:
             ui.html(f"""<div class="ta-card"><span class="ta-muted">Payment instruction</span>
             <h3>{ui.money(float(inv['balance']), ccy, decimals=2)}</h3>
-            <p>To <b>{inv['supplier']}</b><br>Trigger: copy of bill of lading (expected {inv['bl_date']:%d %b})<br>
-            Deadline: {inv['due_date']:%d %b %Y}</p></div>""")
+            <p>To <b>{inv['supplier']}</b><br>Paid when we receive the bill of lading copy
+            (expected {inv['bl_date']:%d %b})<br>Deadline {inv['due_date']:%d %b %Y}</p>
+            <p style="margin-top:.6rem">{ui.status_pill('Awaiting B/L')}</p></div>""")
             st.write("")
-            if st.button("Simulate B/L copy received", type="primary", width="stretch"):
+            if st.button("Simulate bill of lading received", type="primary", width="stretch"):
                 st.session_state[bl_key] = True
                 st.rerun()
-
-    legs = res["legs"]
-    if not legs.empty:
-        ui.html("<b>Settlement log</b>")
-        rows = []
-        for x in legs.itertuples():
-            settle = (pd.Timestamp(x.date) + pd.offsets.BDay(m["settlement_days"])).date()
-            status = "Held at partner" if settle <= today or received else "Scheduled"
-            rows.append([f"{pd.Timestamp(x.date):%d %b}", f"{settle:%d %b}", x.dealer,
-                         f"{x.amount_fx / res['usd_per_unit']:,.0f} {ccy}", ui.status_pill(status)])
-        ui.table([("Converted", ""), ("Settles", ""), ("Dealer", ""), ("Amount", "r"), ("Status", "")], rows)
+    with r:
+        held_now = sched.loc[pd.to_datetime(sched["date"]) < pd.Timestamp(today), "buy_fx"].sum()
+        ui.kpis([
+            {"label": "Held for you today", "value": ui.money(held_now, ccy), "sub": "at our licensed partner"},
+            {"label": "Still to buy", "value": ui.money(max(float(inv["balance"]) - held_now, 0), ccy),
+             "sub": "on the plan and the due date"},
+        ])
+        legs = res["legs"]
+        if not legs.empty:
+            rows = []
+            for x in legs.itertuples():
+                settle = (pd.Timestamp(x.date) + pd.offsets.BDay(m["settlement_days"])).date()
+                status = "Held at partner" if settle <= today or received else "Scheduled"
+                rows.append([f"{pd.Timestamp(x.date):%d %b}", x.dealer,
+                             f"{x.amount_fx / res['usd_per_unit']:,.0f} {ccy}", ui.status_pill(status)])
+            ui.table([("Bought", ""), ("Dealer", ""), ("Amount", "r"), ("Status", "")], rows)
 
 
 # ---------------------------------------------------------------- tab 5: savings
@@ -437,52 +421,42 @@ def _payments_tab(res, inv, cash, ref, m, sim) -> None:
 def _savings_tab(res, inv, cash, ref, m, sim) -> None:
     comp, shock, local = res["compare"], res["shock"], res["local"]
     sb, sp = comp["savings"]["Unprotected (bank)"], comp["savings"]["Unprotected (parallel market)"]
+    shock_saving = shock["savings"]["Unprotected (bank)"]
     ui.kpis([
-        {"label": "Saving in the worst 5% of outcomes", "value": ui.money(sb["tail_savings"], local, short=True),
-         "sub": f"{sb['tail_savings_pct']:+.1%} vs. unprotected bank purchase", "highlight": True},
-        {"label": f"Saving in a +{sim.shock:.0%} shock on day {sim.shock_day}",
-         "value": ui.money(shock["savings"]["Unprotected (bank)"], local, short=True),
-         "sub": f"{shock['savings_pct']['Unprotected (bank)']:+.1%} vs. bank",
-         "tone": "pos" if shock["savings"]["Unprotected (bank)"] > 0 else "neg"},
-        {"label": "Average vs. parallel market", "value": ui.money(sp["mean"], local, short=True),
-         "sub": f"{sp['mean_pct']:+.1%} · cheaper in {sp['prob_cheaper']:.0%} of paths",
-         "tone": "pos" if sp["mean"] > 0 else "neg"},
-        {"label": "Average vs. bank", "value": ui.money(sb["mean"], local, short=True),
-         "sub": f"{sb['mean_pct']:+.1%} · the average cost of protection" if sb["mean"] < 0 else f"{sb['mean_pct']:+.1%}",
-         "tone": "pos" if sb["mean"] > 0 else "neg"},
+        {"label": "Typical saving vs. the parallel market", "value": ui.money(sp["mean"], local, short=True),
+         "sub": f"cheaper in {sp['prob_cheaper']:.0%} of scenarios",
+         "tone": "pos" if sp["mean"] > 0 else "neg", "highlight": True},
+        {"label": f"If the naira falls {sim.shock:.0%} in {sim.shock_day} trading days",
+         "value": ui.money(shock_saving, local, short=True), "sub": "saved vs. buying at the bank on the due date",
+         "tone": "pos" if shock_saving > 0 else "neg"},
+        {"label": "In a bad month (worst 1 in 20)", "value": ui.money(sb["tail_savings"], local, short=True),
+         "sub": "saved vs. buying at the bank on the due date", "tone": "pos" if sb["tail_savings"] > 0 else "neg"},
     ])
-    ui.alert("Protection works like insurance. Against a bank that delivers on time, it costs a little on "
-             "average (interest given up, conversion costs) and pays off when the currency falls. Against the "
-             "parallel market, where many SMEs buy today, it saves money in most outcomes.", "info")
+    note = (f"Against a bank that delivers on time, protection costs about "
+            f"{ui.money(-sb['mean'], local, short=True)} on average, the interest your naira would have earned. "
+            if sb["mean"] < 0 else "")
+    ui.alert("Protection works like insurance. " + note +
+             "It pays off when the naira falls, and against the parallel market, where many importers buy "
+             "today, it saves money in most cases.", "info")
 
-    ui.html(f"<b>Final cost across {workspace.N_PATHS:,} simulated rate paths</b> "
-            "<span class='ta-muted'>· line 5–95% of outcomes, band middle half, dot median</span>")
-    st.plotly_chart(charts.cost_ranges(comp["distributions"], local), config=charts.CONFIG, theme=None,
-                    width="stretch")
-    ui.html(f"<b>Shock test: +{sim.shock:.0%} overnight on trading day {sim.shock_day}</b>")
+    ui.html(f"<b>What the invoice costs if the naira falls {sim.shock:.0%} in {sim.shock_day} trading days</b>")
     costs = {"TradeAhead plan": shock["plan_cost"]} | shock["baselines"]
     st.plotly_chart(charts.shock_bars(costs, local, height=230), config=charts.CONFIG, theme=None, width="stretch")
+    ui.html("<p class='ta-muted'>Change the size and timing of the fall on the left.</p>")
 
-    ui.html("<b>Strategy comparison</b> <span class='ta-muted'>· final cost including interest given up</span>")
-    rows = []
-    for name, s in comp["costs"].items():
-        rows.append([f"<b>{name}</b>" if name == "TradeAhead plan" else name,
-                     ui.money(s["mean"], local, short=True), ui.money(s["median"], local, short=True),
-                     ui.money(s["p95"], local, short=True), ui.money(s["worst"], local, short=True),
-                     ui.money(s["p95"] - s["p05"], local, short=True)])
-    ui.table([("Strategy", ""), ("Average", "r"), ("Median", "r"), ("Bad case (95th pct)", "r"),
-              ("Worst path", "r"), ("Range (5–95%)", "r")], rows, highlight={0})
-
-    with st.expander("Assumptions"):
+    with st.expander("How we calculated this"):
         sc = res["scenario"]
+        ui.html(f"<p>We simulated {workspace.N_PATHS:,} possible paths for the exchange rate up to your due "
+                "date, including sudden devaluations as often as they have happened since 2021, and costed "
+                "each strategy on every path.</p>")
+        ui.table([("Strategy", ""), ("Average cost", "r"), ("Bad case (1 in 20)", "r")],
+                 [[f"<b>{n}</b>" if n == "TradeAhead plan" else n, ui.money(s["mean"], local, short=True),
+                   ui.money(s["p95"], local, short=True)] for n, s in comp["costs"].items()], highlight={0})
+        st.write("")
         ui.table([("Assumption", ""), ("Value", "r")], [
-            ["TradeAhead all-in conversion cost (routed)", ui.pct(res["all_in"], decimals=2)],
-            ["Bank all-in cost without TradeAhead", ui.pct(m["baseline_bank_cost"], decimals=2)],
+            ["TradeAhead conversion cost", ui.pct(res["all_in"], decimals=2)],
+            ["Bank conversion cost without TradeAhead", ui.pct(m["baseline_bank_cost"], decimals=2)],
             ["Parallel-market premium", ui.pct(m["parallel_premium"], decimals=1)],
-            [f"{local} deposit rate / USD holding rate",
-             f"{m['local_deposit_rate']:.0%} / {m['usd_holding_rate']:.0%}"],
-            ["Day-to-day volatility (annualised)", ui.pct(sc.daily_vol * 252 ** 0.5)],
-            ["Devaluations per year (>5% in a day)", f"{sc.jump_prob * 252:.1f}, avg {sc.jump_mean:.0%}"],
-            ["Expected change over the plan", ui.pct(sc.total_drift * res['n'], signed=True)],
-            ["Simulated paths", f"{workspace.N_PATHS:,}"],
+            [f"Interest on {local} deposits", f"{m['local_deposit_rate']:.0%}"],
+            ["Sudden devaluations per year", f"{sc.jump_prob * 252:.1f}, average {sc.jump_mean:.0%}"],
         ])

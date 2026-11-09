@@ -60,33 +60,34 @@ def render() -> None:
     with right:
         ui.html(_preview_card())
 
-    # ---------------------------------------------------------------- problem
-    with st.container(key="band_tint_problem"):
+    # ---------------------------------------------------------------- problem vs. TradeAhead, side by side
+    rows = [
+        ("Devaluations arrive overnight",
+         "One announcement can move the rate 30% or more, long after the order price was agreed.",
+         "Predictable payments",
+         "You see how many dollars you'll buy each day and what the invoice will cost, before the due date."),
+        ("Converting early drains your cash",
+         "Buying the whole balance up front protects the price but ties up the cash you need to operate.",
+         "Protected cash flow",
+         "Every plan respects the minimum cash balance you set, even if the naira weakens sharply."),
+        ("Cheap quotes don't always arrive",
+         "Dealers that fill late or only partly force a rushed purchase and a late supplier payment.",
+         "Dealers that deliver",
+         "Each purchase goes to the dealer with the best rate once its delivery record is counted."),
+        ("Hedging means contracts and margin calls",
+         "Forwards and options are hard to get and can demand extra cash when the rate moves.",
+         "No derivative risk",
+         "You only buy the currency you owe, for an invoice you already have, through licensed dealers."),
+    ]
+    body = "".join(f"""<div class="ta-compare__row">
+        <div class="ta-compare__before"><h3>{a}</h3><p>{b}</p></div>
+        <div class="ta-compare__after"><h3>{c}</h3><p>{d}</p></div></div>""" for a, b, c, d in rows)
+    with st.container(key="band_ink_compare"):
         ui.section("Your supplier price is fixed. Your cost isn't.",
                    "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
                    "weeks later in naira. If the naira falls in between, the same invoice costs far more.")
-        ui.cols([
-            ("Timing", "Devaluations arrive overnight",
-             "One announcement can move the rate 30% or more, long after the order price was agreed."),
-            ("Cash", "Converting early drains working capital",
-             "Buying the whole balance up front protects the price but ties up the cash you need to operate."),
-            ("Delivery", "Cheap quotes don't always arrive",
-             "Dealers that fill late or only partly force a rushed purchase at a worse rate, and a late supplier payment."),
-        ])
-
-    # ---------------------------------------------------------------- benefits
-    with st.container(key="band_ink_benefits"):
-        ui.section("What you get with TradeAhead")
-        ui.cols([
-            ("Predictable payments", "Know the cost before the due date",
-             "See how many dollars you'll buy each day and what the invoice will cost, instead of finding out on "
-             "the day you pay."),
-            ("No derivative risk", "Only buy what you owe",
-             "No forwards, options or margin calls. You buy the currency for an invoice you already have, through "
-             "licensed dealers."),
-            ("Protected cash flow", "Your buffer stays untouched",
-             "Every plan respects the minimum cash balance you set, even if the naira weakens sharply while it runs."),
-        ])
+        ui.html(f"""<div class="ta-compare"><div class="ta-compare__row ta-compare__head">
+            <div>Without TradeAhead</div><div>With TradeAhead</div></div>{body}</div>""")
 
     # ---------------------------------------------------------------- volatility simulator
     ui.section("See what a devaluation does to one invoice",

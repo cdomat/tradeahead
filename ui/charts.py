@@ -9,7 +9,7 @@ import plotly.io as pio
 
 INK, TEAL, TEAL_L, EMBER, AMBER = "#0F2A2E", "#3F6B70", "#BFD0CC", "#B8501E", "#E39A4F"
 MUTED, GRID, PAPER, LINE, NEG, POS = "#5E696B", "#E9E5DA", "#FDFCF8", "#DDD8CC", "#A8382A", "#2E7D5B"
-FONT = "DM Sans, system-ui, sans-serif"
+FONT = "IBM Plex Sans, system-ui, sans-serif"
 
 pio.templates["tradeahead"] = go.layout.Template(layout=dict(
     font=dict(family=FONT, size=12.5, color=INK),
@@ -122,88 +122,6 @@ def rank_slope(ranked: pd.DataFrame, height: int = 340) -> go.Figure:
                    side="top", linecolor="rgba(0,0,0,0)", ticks=""),
         yaxis=dict(autorange="reversed", showgrid=False, showticklabels=False, range=[n + 0.5, 0.5]),
     )
-    return fig
-
-
-def waterfall(parts: dict[str, float], local: str, height: int = 360) -> go.Figure:
-    """Mid-market cost, then each cost layer stacked on top, then the all-in total."""
-    labels = [k for k in parts if k != "All-in cost"]
-    total = parts["All-in cost"]
-    first = parts[labels[0]]
-    lo = first * 0.985  # zoom in: the layers are small next to the base
-    bases, heights, colors, text = [lo], [first - lo], [TEAL], [_short(first)]
-    running = first
-    for k in labels[1:]:
-        bases.append(running)
-        heights.append(parts[k])
-        colors.append(EMBER)
-        text.append(f"+{_short(parts[k])}")
-        running += parts[k]
-    bases.append(lo)
-    heights.append(total - lo)
-    colors.append(INK)
-    text.append(_short(total))
-    short = {"Mid-market cost": "Mid-market", "Dealer spread": "Dealer spread", "Execution slippage": "Slippage",
-             "TradeAhead margin": "TradeAhead margin", "Expected delivery cost": "Delivery risk"}
-    x = [short.get(k, k) for k in labels] + ["All-in cost"]
-    real = [first] + [parts[k] for k in labels[1:]] + [total]
-    fig = go.Figure(go.Bar(x=x, y=heights, base=bases, marker_color=colors, marker_line_width=0,
-                           text=text, textposition="outside", textfont=dict(color=INK, size=12),
-                           customdata=real, hovertemplate="%{x}: %{customdata:,.0f}<extra></extra>"))
-    fig.update_layout(height=height, showlegend=False, hovermode="closest", yaxis_title=local, bargap=0.35,
-                      yaxis_range=[lo, total + (total - lo) * 0.08])
-    return fig
-
-
-# ---------------------------------------------------------------- Payments
-
-def held_vs_trigger(schedule: pd.DataFrame, balance: float, bl_date, due_date, ccy: str,
-                    height: int = 320) -> go.Figure:
-    """Dollars held at the partner over time, against the B/L trigger and the due date."""
-    d = list(pd.to_datetime(schedule["date"]) + pd.offsets.BDay(1))  # funds land T+1
-    y = list(schedule["cum_fx"])
-    if y:  # funds stay held until the due date
-        d.append(pd.Timestamp(due_date))
-        y.append(y[-1])
-    fig = go.Figure(go.Scatter(x=d, y=y, mode="lines", line=dict(color=EMBER, width=2.5, shape="hv"),
-                               fill="tozeroy", fillcolor="rgba(184,80,30,.10)", name="Held at partner",
-                               hovertemplate="%{y:,.0f}<extra>Held</extra>"))
-    fig.add_hline(y=balance, line=dict(color=INK, width=1.5, dash="dash"),
-                  annotation_text=f"Balance due {balance:,.0f}", annotation_position="top left",
-                  annotation_font=dict(color=INK, size=11))
-    for x, label, color, side in ((bl_date, "B/L copy ", TEAL, "right"), (due_date, " Due date", EMBER, "left")):
-        x = pd.Timestamp(x)
-        fig.add_vline(x=x, line=dict(color=color, width=1.5, dash="dot"))
-        fig.add_annotation(x=x, y=1, yref="paper", text=label, showarrow=False, yanchor="bottom", xanchor=side,
-                           font=dict(size=11, color=color))
-    fig.update_layout(height=height, showlegend=False, yaxis_title=ccy, yaxis_rangemode="tozero")
-    return fig
-
-
-# ---------------------------------------------------------------- Savings
-
-def cost_ranges(dists: dict[str, np.ndarray], local: str, height: int = 340) -> go.Figure:
-    """Range of final cost per strategy: thin bar 5–95%, thick bar 25–75%, dot at the median."""
-    names = list(dists)
-    fig = go.Figure()
-    for name in names:
-        q5, q25, q50, q75, q95 = np.percentile(dists[name], [5, 25, 50, 75, 95])
-        color = EMBER if name == "TradeAhead plan" else (INK if "bank" in name else MUTED)
-        label = name.replace("Unprotected (", "Unprotected, ").replace(")", "")
-        tip = (f"<b>{label}</b><br>Median {_short(q50)}<br>Middle half {_short(q25)}–{_short(q75)}"
-               f"<br>5–95% {_short(q5)}–{_short(q95)}<extra></extra>")
-        fig.add_trace(go.Scatter(x=[q5, q95], y=[label] * 2, mode="lines", line=dict(color=color, width=2),
-                                 showlegend=False, hovertemplate=tip))
-        fig.add_trace(go.Scatter(x=[q25, q75], y=[label] * 2, mode="lines", line=dict(color=color, width=10),
-                                 opacity=0.35, showlegend=False, hoverinfo="skip"))
-        fig.add_trace(go.Scatter(x=[q50], y=[label], mode="markers+text", text=[_short(q50)],
-                                 textposition="top center", textfont=dict(size=11, color=INK),
-                                 marker=dict(size=11, color=color, line=dict(color=PAPER, width=2)),
-                                 showlegend=False, hovertemplate=tip))
-    fig.update_layout(height=height, hovermode="closest", xaxis_title=f"Final cost ({local})",
-                      xaxis=dict(showgrid=True, gridcolor=GRID),
-                      yaxis=dict(autorange="reversed", showgrid=False, categoryorder="array",
-                                 categoryarray=[n.replace("Unprotected (", "Unprotected, ").replace(")", "") for n in names]))
     return fig
 
 
