@@ -68,11 +68,6 @@ a{color:var(--ember);}
 .ta-col{border-top:2px solid var(--ember);padding-top:.9rem;}
 .ta-col h3{font-size:17px;margin:0 0 .35rem;padding:0;}
 .ta-col p{font-size:15px;line-height:1.6;margin:0;color:var(--text);}
-.ta-example{width:100%;border-collapse:collapse;font-size:15px;border:0!important;margin:0;}
-.ta-example tr{border:0!important;background:transparent!important;}
-.ta-example td{padding:.55rem 0!important;border:0!important;border-bottom:1px solid var(--sand)!important;color:var(--ink);background:transparent!important;}
-.ta-example td.r{text-align:right;font-weight:600;}
-.ta-example tr:last-child td{border-bottom:0!important;color:var(--neg);}
 
 /* ---------- Cards ---------- */
 [class*="st-key-card"]{background:var(--paper);border:1px solid var(--sand);border-radius:var(--r);padding:1.3rem 1.4rem;box-shadow:var(--shadow);}

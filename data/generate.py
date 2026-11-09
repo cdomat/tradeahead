@@ -60,8 +60,6 @@ FX_EVENTS = [
     {"date": "2023-06-14", "pair": "USD/NGN", "title": "Nigeria unifies FX windows",
      "detail": "The central bank merges its exchange-rate windows. The official rate jumps from about "
                "₦461 to ₦750 per dollar within days."},
-    {"date": "2023-12-29", "pair": "USD/NGN", "title": "₦900 by year end",
-     "detail": "A $50,000 order that cost about ₦23m in May now costs about ₦45m."},
     {"date": "2024-02-01", "pair": "USD/NGN", "title": "Second naira slide",
      "detail": "The naira falls past ₦1,400 per dollar as dollar shortages persist."},
 ]

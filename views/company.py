@@ -61,17 +61,9 @@ def render() -> None:
         ui.html(_preview_card())
 
     # ---------------------------------------------------------------- problem
-    l, r = st.columns([1.3, 1], gap="large", vertical_alignment="bottom")
-    with l:
-        ui.section("Your supplier price is fixed. Your cost isn't.",
-                   "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
-                   "weeks later in naira. If the naira falls in between, the same invoice costs far more.")
-    with r:
-        ui.html("""<div style="margin-top:3.2rem"></div><div class="ta-kicker">Example: one $50,000 order</div><table class="ta-example">
-          <tr><td>Cost when ordered, May 2023</td><td class="r">₦23.0m</td></tr>
-          <tr><td>Cost when paid, December 2023</td><td class="r">₦45.0m</td></tr>
-          <tr><td>Extra cost for the same goods</td><td class="r">+₦22.0m</td></tr></table>""")
-    st.write("")
+    ui.section("Your supplier price is fixed. Your cost isn't.",
+               "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
+               "weeks later in naira. If the naira falls in between, the same invoice costs far more.")
     ui.cols([
         ("Timing", "Devaluations arrive overnight",
          "One announcement can move the rate 30% or more, long after the order price was agreed."),
@@ -94,15 +86,6 @@ def render() -> None:
          "Every plan respects the minimum cash balance you set, even if the naira weakens sharply while it runs."),
     ])
 
-    # ---------------------------------------------------------------- how it works
-    ui.section("How it works")
-    ui.cols([
-        ("Step 1", "Upload the invoice", "We read the amount, currency, terms and shipping dates from your PDF or CSV."),
-        ("Step 2", "Approve your plan", "Daily purchase amounts that fit your cash and remove most of the exchange-rate risk."),
-        ("Step 3", "We buy the currency", "Each purchase goes to the dealer with the best rate after delivery reliability."),
-        ("Step 4", "Your supplier is paid", "Funds wait at a licensed partner and are released on the bill of lading."),
-    ])
-
     # ---------------------------------------------------------------- volatility simulator
     ui.section("See what a devaluation does to one invoice",
                "Pick a currency and two dates to see how much the same invoice cost when it was paid. "
@@ -116,9 +99,9 @@ def render() -> None:
         s = wide[pair].dropna()
         amount = b.number_input(f"Invoice amount ({base})", min_value=1_000, value=50_000, step=5_000,
                                 key="hist_amt")
-        order = c.date_input("Ordered on", value=date(2023, 5, 15), min_value=s.index.min().date(),
+        order = c.date_input("Ordered on", value=date(2024, 1, 2), min_value=s.index.min().date(),
                              max_value=s.index.max().date(), key="hist_order")
-        pay = d.date_input("Balance paid on", value=date(2023, 12, 29), min_value=s.index.min().date(),
+        pay = d.date_input("Balance paid on", value=date(2024, 3, 1), min_value=s.index.min().date(),
                            max_value=s.index.max().date(), key="hist_pay")
         r0, r1 = float(s.asof(pd.Timestamp(order))), float(s.asof(pd.Timestamp(pay)))
         cost0, cost1 = amount * r0, amount * r1

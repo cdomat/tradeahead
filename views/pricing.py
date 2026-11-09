@@ -75,7 +75,7 @@ def render() -> None:
 
     ui.section("Talk to our team",
                "Tell us about your suppliers and payment cycle, and we'll set up your first protection plan with you.")
-    l, r = st.columns([1.6, 1], gap="large")
+    l, _ = st.columns([1.6, 1], gap="large")
     with l, st.form("contact", clear_on_submit=True, border=False):
         a, b = st.columns(2)
         name = a.text_input("Full name *")
@@ -103,11 +103,6 @@ def render() -> None:
                         "role": role or "", "volume": volume or "", "markets": markets.strip(),
                         "message": message.strip()})
             l.success(f"Thank you, {name.split()[0]}. We will be in touch shortly.")
-    with r:
-        ui.html("""<div class="ta-card"><h3>What happens next</h3><ul>
-        <li>We review your details and reply by email.</li>
-        <li>A short call about your suppliers, currencies and payment terms.</li>
-        <li>We set up your account with a licensed partner and build your first plan.</li></ul></div>""")
 
 
 def _save_lead(row: dict) -> None:
