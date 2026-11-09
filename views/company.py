@@ -61,30 +61,32 @@ def render() -> None:
         ui.html(_preview_card())
 
     # ---------------------------------------------------------------- problem
-    ui.section("Your supplier price is fixed. Your cost isn't.",
-               "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
-               "weeks later in naira. If the naira falls in between, the same invoice costs far more.")
-    ui.cols([
-        ("Timing", "Devaluations arrive overnight",
-         "One announcement can move the rate 30% or more, long after the order price was agreed."),
-        ("Cash", "Converting early drains working capital",
-         "Buying the whole balance up front protects the price but ties up the cash you need to operate."),
-        ("Delivery", "Cheap quotes don't always arrive",
-         "Dealers that fill late or only partly force a rushed purchase at a worse rate, and a late supplier payment."),
-    ])
+    with st.container(key="band_tint_problem"):
+        ui.section("Your supplier price is fixed. Your cost isn't.",
+                   "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
+                   "weeks later in naira. If the naira falls in between, the same invoice costs far more.")
+        ui.cols([
+            ("Timing", "Devaluations arrive overnight",
+             "One announcement can move the rate 30% or more, long after the order price was agreed."),
+            ("Cash", "Converting early drains working capital",
+             "Buying the whole balance up front protects the price but ties up the cash you need to operate."),
+            ("Delivery", "Cheap quotes don't always arrive",
+             "Dealers that fill late or only partly force a rushed purchase at a worse rate, and a late supplier payment."),
+        ])
 
     # ---------------------------------------------------------------- benefits
-    ui.section("What you get with TradeAhead")
-    ui.cols([
-        ("Predictable payments", "Know the cost before the due date",
-         "See how many dollars you'll buy each day and what the invoice will cost, instead of finding out on "
-         "the day you pay."),
-        ("No derivative risk", "Only buy what you owe",
-         "No forwards, options or margin calls. You buy the currency for an invoice you already have, through "
-         "licensed dealers."),
-        ("Protected cash flow", "Your buffer stays untouched",
-         "Every plan respects the minimum cash balance you set, even if the naira weakens sharply while it runs."),
-    ])
+    with st.container(key="band_ink_benefits"):
+        ui.section("What you get with TradeAhead")
+        ui.cols([
+            ("Predictable payments", "Know the cost before the due date",
+             "See how many dollars you'll buy each day and what the invoice will cost, instead of finding out on "
+             "the day you pay."),
+            ("No derivative risk", "Only buy what you owe",
+             "No forwards, options or margin calls. You buy the currency for an invoice you already have, through "
+             "licensed dealers."),
+            ("Protected cash flow", "Your buffer stays untouched",
+             "Every plan respects the minimum cash balance you set, even if the naira weakens sharply while it runs."),
+        ])
 
     # ---------------------------------------------------------------- volatility simulator
     ui.section("See what a devaluation does to one invoice",

@@ -73,36 +73,37 @@ def render() -> None:
             b.markdown("<p class='ta-muted' style='padding-top:2rem'>Enter your monthly volume to compare the "
                        "total cost of each plan.</p>", unsafe_allow_html=True)
 
-    ui.section("Talk to our team",
-               "Tell us about your suppliers and payment cycle, and we'll set up your first protection plan with you.")
-    l, _ = st.columns([1.6, 1], gap="large")
-    with l, st.form("contact", clear_on_submit=True, border=False):
-        a, b = st.columns(2)
-        name = a.text_input("Full name *")
-        company = b.text_input("Company *")
-        email = a.text_input("Work email *")
-        phone = b.text_input("Phone (optional)")
-        a, b = st.columns(2)
-        role = a.selectbox("Your role", ["Owner / director", "Finance", "Procurement", "Clearing agent", "Other"],
-                           index=None, placeholder="Choose")
-        volume = b.selectbox("Monthly supplier payments", ["Under $25k", "$25k–100k", "$100k–500k", "Over $500k"],
-                             index=None, placeholder="Choose")
-        markets = st.text_input("City or state you import into", placeholder="e.g. Lagos")
-        message = st.text_area("What would you like to protect?", placeholder="e.g. monthly yuan invoices from Guangzhou")
-        consent = st.checkbox("I agree to be contacted by TradeAhead about my enquiry. *")
-        sent = st.form_submit_button("Send", type="primary")
-    if sent:
-        errors = [m for ok, m in [(name.strip(), "your name"), (company.strip(), "your company"),
-                                  (EMAIL.match(email.strip() or ""), "a valid email"), (consent, "your consent")]
-                  if not ok]
-        if errors:
-            l.error("Please add " + ", ".join(errors) + ".")
-        else:
-            _save_lead({"received": datetime.now().isoformat(timespec="seconds"), "name": name.strip(),
-                        "company": company.strip(), "email": email.strip(), "phone": phone.strip(),
-                        "role": role or "", "volume": volume or "", "markets": markets.strip(),
-                        "message": message.strip()})
-            l.success(f"Thank you, {name.split()[0]}. We will be in touch shortly.")
+    with st.container(key="band_tint_contact"):
+        ui.section("Talk to our team",
+                   "Tell us about your suppliers and payment cycle, and we'll set up your first protection plan with you.")
+        l, _ = st.columns([1.6, 1], gap="large")
+        with l, st.form("contact", clear_on_submit=True, border=False):
+            a, b = st.columns(2)
+            name = a.text_input("Full name *")
+            company = b.text_input("Company *")
+            email = a.text_input("Work email *")
+            phone = b.text_input("Phone (optional)")
+            a, b = st.columns(2)
+            role = a.selectbox("Your role", ["Owner / director", "Finance", "Procurement", "Clearing agent", "Other"],
+                               index=None, placeholder="Choose")
+            volume = b.selectbox("Monthly supplier payments", ["Under $25k", "$25k–100k", "$100k–500k", "Over $500k"],
+                                 index=None, placeholder="Choose")
+            markets = st.text_input("City or state you import into", placeholder="e.g. Lagos")
+            message = st.text_area("What would you like to protect?", placeholder="e.g. monthly yuan invoices from Guangzhou")
+            consent = st.checkbox("I agree to be contacted by TradeAhead about my enquiry. *")
+            sent = st.form_submit_button("Send", type="primary")
+        if sent:
+            errors = [m for ok, m in [(name.strip(), "your name"), (company.strip(), "your company"),
+                                      (EMAIL.match(email.strip() or ""), "a valid email"), (consent, "your consent")]
+                      if not ok]
+            if errors:
+                l.error("Please add " + ", ".join(errors) + ".")
+            else:
+                _save_lead({"received": datetime.now().isoformat(timespec="seconds"), "name": name.strip(),
+                            "company": company.strip(), "email": email.strip(), "phone": phone.strip(),
+                            "role": role or "", "volume": volume or "", "markets": markets.strip(),
+                            "message": message.strip()})
+                l.success(f"Thank you, {name.split()[0]}. We will be in touch shortly.")
 
 
 def _save_lead(row: dict) -> None:

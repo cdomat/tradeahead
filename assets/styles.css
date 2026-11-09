@@ -178,3 +178,38 @@ a{color:var(--ember);}
   .ta-hero h1{font-size:34px;}
   [data-testid="stMainBlockContainer"],.block-container{padding:calc(var(--bar-h) + 1.2rem) 1rem 3rem;}
 }
+
+/* ---------- Section bands: tinted and dark focus blocks ---------- */
+[class*="st-key-band_"]{border-radius:20px;padding:4rem 2rem;margin:3rem 0 1rem;}
+[class*="st-key-band_"] .ta-section{margin-top:0;}
+[class*="st-key-band_tint"]{background:#EBE8E0;}
+[class*="st-key-band_ink"]{background:var(--ink);}
+[class*="st-key-band_ink"] h2,[class*="st-key-band_ink"] h3{color:#fff!important;}
+[class*="st-key-band_ink"] .ta-section p,[class*="st-key-band_ink"] .ta-col p{color:#C9D6D4;}
+[class*="st-key-band_ink"] .ta-kicker{color:#F2A65A;}
+[class*="st-key-band_ink"] .ta-col{border-top-color:#F2A65A;}
+
+/* ---------- Motion: soft fade-up on load, smooth hovers ---------- */
+@keyframes ta-fade-up{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.ta-hero,.ta-header,.ta-section,.ta-card,.ta-kpi,.ta-col,.ta-tier,.ta-table-wrap,
+[class*="st-key-band_"],[class*="st-key-card"],[class*="st-key-cta"]{animation:ta-fade-up .55s ease-out both;}
+.ta-cols>.ta-col:nth-child(2),.ta-kpis>.ta-kpi:nth-child(2){animation-delay:.08s;}
+.ta-cols>.ta-col:nth-child(3),.ta-kpis>.ta-kpi:nth-child(3){animation-delay:.16s;}
+.ta-cols>.ta-col:nth-child(4),.ta-kpis>.ta-kpi:nth-child(4){animation-delay:.24s;}
+
+.ta-card,.ta-kpi,.ta-tier,[class*="st-key-card"]{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;}
+.ta-card:hover,.ta-tier:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(15,42,46,.05),0 12px 28px rgba(15,42,46,.08);border-color:var(--line);}
+.ta-kpi:hover{box-shadow:0 2px 4px rgba(15,42,46,.05),0 10px 22px rgba(15,42,46,.07);}
+.stButton>button,.stDownloadButton>button,.stFormSubmitButton>button,[data-testid^="stBaseButton"]{transition:all .25s ease;}
+.stButton>button:hover,.stDownloadButton>button:hover{transform:translateY(-1px);}
+[data-testid="stTopNavLink"],[data-testid="stTopNavLink"] span{transition:all .25s ease;}
+[data-baseweb="tab"],[data-baseweb="tab"] p{transition:color .25s ease;}
+[data-baseweb="tab-highlight"]{transition:all .25s ease!important;}
+[data-baseweb="input"],[data-baseweb="select"]>div,[data-testid="stFileUploaderDropzone"]{transition:border-color .25s ease,box-shadow .25s ease,background .25s ease;}
+
+@media (max-width:640px){
+  [class*="st-key-band_"]{padding:2.5rem 1.2rem;border-radius:14px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;}
+}

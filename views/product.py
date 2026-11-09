@@ -37,15 +37,16 @@ def render() -> None:
     else:
         _plan_demo(wide)
 
-    ui.section("Who does what")
-    ui.cols([
-        ("TradeAhead", "Plans and routes", "Reads your invoices, builds and updates the protection plan, chooses "
-         "the dealer for each purchase and sends the payment instructions."),
-        ("Licensed partners", "Hold and move the money", "Banks and licensed FX and payment providers hold your "
-         "naira and dollars, carry out each purchase and pay your supplier."),
-        ("You", "Stay in control", "Set your cash buffer and how much of each invoice to protect, approve the "
-         "plan, and see every payment before it goes out."),
-    ])
+    with st.container(key="band_tint_roles"):
+        ui.section("Who does what")
+        ui.cols([
+            ("TradeAhead", "Plans and routes", "Reads your invoices, builds and updates the protection plan, chooses "
+             "the dealer for each purchase and sends the payment instructions."),
+            ("Licensed partners", "Hold and move the money", "Banks and licensed FX and payment providers hold your "
+             "naira and dollars, carry out each purchase and pay your supplier."),
+            ("You", "Stay in control", "Set your cash buffer and how much of each invoice to protect, approve the "
+             "plan, and see every payment before it goes out."),
+        ])
 
     st.write("")
     if st.button("Try it with your own invoice", type="primary"):
