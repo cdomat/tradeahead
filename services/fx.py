@@ -16,12 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "fx_history.csv"
 
 # Units of each currency per 1 USD, as Yahoo lists them.
-USD_LEGS = {"NGN": "NGN=X", "EGP": "EGP=X", "CNY": "CNY=X", "EUR": "EUR=X", "GBP": "GBP=X", "CAD": "CAD=X"}
+USD_LEGS = {"NGN": "NGN=X", "CNY": "CNY=X", "EUR": "EUR=X", "GBP": "GBP=X", "CAD": "CAD=X"}
 
 # Nigeria: five foreign currencies Nigerian importers pay in, quoted in naira.
 NGN_PAIRS = ["USD/NGN", "CNY/NGN", "EUR/NGN", "GBP/NGN", "CAD/NGN"]
-EGP_PAIRS = ["USD/EGP", "CNY/EGP", "EUR/EGP"]
-ALL_PAIRS = NGN_PAIRS + EGP_PAIRS
+ALL_PAIRS = NGN_PAIRS
 
 
 def _clean(series: pd.Series, jump: float = 0.07) -> pd.Series:
@@ -76,20 +75,18 @@ def load_history(prefer_live: bool = True, start: str = "2021-01-01") -> tuple[p
             pass
     if SNAPSHOT.exists():
         long = pd.read_csv(SNAPSHOT, parse_dates=["date"])
-        return long.pivot(index="date", columns="pair", values="rate"), "Saved snapshot"
+        wide = long.pivot(index="date", columns="pair", values="rate")
+        return wide[[p for p in ALL_PAIRS if p in wide.columns]], "Saved snapshot"
     return synthetic_history(), "Simulated"
 
 
 def synthetic_history(seed: int = 7) -> pd.DataFrame:
-    """Offline stand-in that follows the real naira and pound path at monthly anchor points."""
+    """Offline stand-in that follows the real naira path at anchor points."""
     rng = np.random.default_rng(seed)
     dates = pd.bdate_range("2021-01-01", pd.Timestamp.today().normalize())
     anchors = {
         "NGN": [("2021-01-01", 380), ("2023-06-13", 461), ("2023-06-16", 750), ("2023-12-29", 897),
                 ("2024-02-01", 1420), ("2024-09-30", 1667), ("2025-06-30", 1542), ("2026-11-06", 1345)],
-        "EGP": [("2021-01-01", 15.7), ("2022-03-20", 15.7), ("2022-03-22", 18.3), ("2022-10-26", 19.7),
-                ("2022-10-28", 23.2), ("2023-01-10", 29.5), ("2024-03-05", 30.9), ("2024-03-07", 49.5),
-                ("2026-02-01", 46.0), ("2026-10-30", 54.7)],
     }
     legs = {}
     for ccy, pts in anchors.items():

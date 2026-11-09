@@ -4,7 +4,7 @@
     python data/generate.py --offline  # no network: saved snapshot, else simulated FX
 
 Writes to data/:
-    fx_history.csv     daily rates for the naira and pound pairs (live, cleaned)
+    fx_history.csv     daily rates for the naira pairs (live, cleaned)
     fx_events.json     historical devaluations shown in the volatility chart
     markets.json       per-market assumptions (deposit rates, parallel premium, fees)
     dealers.json       licensed dealer panel (fictional names) used by routing
@@ -40,15 +40,9 @@ MARKETS = {
         "local_deposit_rate": 0.18, "usd_holding_rate": 0.02,
         "parallel_premium": 0.037, "baseline_bank_cost": 0.02, "settlement_days": 1, "late_cost_per_day": 0.003,
         "note": "Deposit rate: assumed SME naira deposit/money-market yield. Parallel premium: up to 3.7% "
-                "saving from authorized dealers (TradeAhead concept summary). Bank cost: assumed all-in cost an SME pays its bank today. "
+                "saving from using authorized dealers instead of the parallel market. Bank cost: assumed all-in cost an SME pays its bank today. "
                 "Late cost: daily cost of a "
                 "delayed supplier payment (held cargo, demurrage), as a share of the payment.",
-    },
-    "EG": {
-        "name": "Egypt", "local": "EGP", "symbol": "E£", "pairs": fx.EGP_PAIRS, "default_pair": "USD/EGP",
-        "local_deposit_rate": 0.20, "usd_holding_rate": 0.02,
-        "parallel_premium": 0.02, "baseline_bank_cost": 0.02, "settlement_days": 1, "late_cost_per_day": 0.003,
-        "note": "Phase 3 market (months 25-36). Same engine, new dealer partner.",
     },
 }
 
@@ -70,12 +64,6 @@ FX_EVENTS = [
      "detail": "A $50,000 order that cost about ₦23m in May now costs about ₦45m."},
     {"date": "2024-02-01", "pair": "USD/NGN", "title": "Second naira slide",
      "detail": "The naira falls past ₦1,400 per dollar as dollar shortages persist."},
-    {"date": "2022-10-27", "pair": "USD/EGP", "title": "Egypt devalues",
-     "detail": "The pound moves from about E£19.7 to E£23 per dollar after an IMF agreement."},
-    {"date": "2024-03-06", "pair": "USD/EGP", "title": "Egypt floats the pound",
-     "detail": "The pound drops from about E£31 to E£49 per dollar in one day."},
-    {"date": "2026-02-02", "pair": "USD/EGP", "title": "Dollar +19% since February 2026",
-     "detail": "A steady climb in the dollar's cost in pounds through October 2026."},
 ]
 
 # ---------------------------------------------------------------- Dealer panel (fictional)
@@ -109,21 +97,6 @@ DEALERS = [
      "spread_bps": {"<10k": 200, "10-50k": 80, "50-250k": 55, "250k+": 45},
      "fill_prob": {"<10k": 0.50, "10-50k": 0.66, "50-250k": 0.78, "250k+": 0.86},
      "delay_days": 8.0, "slippage_bps": 12},
-    {"id": "EG-B1", "market": "EG", "name": "Nile Crescent Bank", "type": "Tier-1 bank",
-     "min_ticket": 5_000, "max_ticket": 300_000, "daily_capacity": 500_000,
-     "spread_bps": {"<10k": 120, "10-50k": 80, "50-250k": 60, "250k+": 50},
-     "fill_prob": {"<10k": 0.70, "10-50k": 0.78, "50-250k": 0.84, "250k+": 0.88},
-     "delay_days": 5.0, "slippage_bps": 12},
-    {"id": "EG-F1", "market": "EG", "name": "Pharos Exchange", "type": "Licensed FX provider",
-     "min_ticket": 500, "max_ticket": 50_000, "daily_capacity": 100_000,
-     "spread_bps": {"<10k": 100, "10-50k": 95, "50-250k": 95, "250k+": 95},
-     "fill_prob": {"<10k": 0.93, "10-50k": 0.90, "50-250k": 0.75, "250k+": 0.55},
-     "delay_days": 1.5, "slippage_bps": 10},
-    {"id": "EG-B2", "market": "EG", "name": "Delta Gulf Bank", "type": "Tier-2 bank",
-     "min_ticket": 2_000, "max_ticket": 120_000, "daily_capacity": 180_000,
-     "spread_bps": {"<10k": 110, "10-50k": 85, "50-250k": 70, "250k+": 70},
-     "fill_prob": {"<10k": 0.76, "10-50k": 0.80, "50-250k": 0.74, "250k+": 0.62},
-     "delay_days": 3.5, "slippage_bps": 20},
 ]
 
 

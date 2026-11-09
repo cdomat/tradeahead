@@ -11,15 +11,6 @@ from ui import charts
 from ui import components as ui
 from views import PAGES
 
-# Small line icons (stroke follows the text colour).
-_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' \
-       'stroke-linecap="round" stroke-linejoin="round">{}</svg>'
-ICONS = {
-    "calendar": _SVG.format('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>'),
-    "shield": _SVG.format('<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>'),
-    "wallet": _SVG.format('<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/>'),
-}
-
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def _preview_plan(spot_key: float) -> tuple[pd.DataFrame, float]:
@@ -54,6 +45,7 @@ def render() -> None:
     left, right = st.columns([1.15, 1], gap="large", vertical_alignment="center")
     with left:
         ui.html("""<div class="ta-hero">
+          <div class="ta-kicker">Now piloting with importers in Nigeria</div>
           <h1>Pay foreign suppliers on time, at a cost you can plan.</h1>
           <p>TradeAhead turns each supplier invoice into a daily currency-buying plan your cash can afford,
           buys through the dealers most likely to deliver, and pays your supplier when the goods ship.</p>
@@ -64,58 +56,62 @@ def render() -> None:
             st.switch_page(PAGES["dashboard"])
         if c2.button("How it works", width="stretch"):
             st.switch_page(PAGES["product"])
-        ui.html("""<div class="ta-trust"><span>No derivatives</span><span>Funds held by licensed partners</span>
-          <span>Free to start</span></div>""")
+        ui.html('<div class="ta-trust">No derivatives. Funds held by licensed partners. Free to start.</div>')
     with right:
         ui.html(_preview_card())
 
     # ---------------------------------------------------------------- problem
-    ui.section("Your supplier price is fixed. Your cost isn't.",
-               "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
-               "weeks later in local currency. If the currency falls in between, the same invoice costs far more. "
-               "A $50,000 order placed in May 2023 cost ₦23m; paid that December, it cost ₦45m.")
-    ui.grid([
-        ui.card("Devaluations arrive overnight",
-                "One announcement can move the rate 30% or more, long after the order price was agreed."),
-        ui.card("Cash is tied up in the business",
-                "Converting the whole balance early protects the price but drains the cash you need to operate."),
-        ui.card("Cheap quotes don't always deliver",
-                "Dealers that fill late or only partly force a rushed purchase at a worse rate, and a late supplier payment."),
-    ], min_width=260)
+    l, r = st.columns([1.3, 1], gap="large", vertical_alignment="bottom")
+    with l:
+        ui.section("Your supplier price is fixed. Your cost isn't.",
+                   "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
+                   "weeks later in naira. If the naira falls in between, the same invoice costs far more.")
+    with r:
+        ui.html("""<div style="margin-top:3.2rem"></div><div class="ta-kicker">Example: one $50,000 order</div><table class="ta-example">
+          <tr><td>Cost when ordered, May 2023</td><td class="r">₦23.0m</td></tr>
+          <tr><td>Cost when paid, December 2023</td><td class="r">₦45.0m</td></tr>
+          <tr><td>Extra cost for the same goods</td><td class="r">+₦22.0m</td></tr></table>""")
+    st.write("")
+    ui.cols([
+        ("Timing", "Devaluations arrive overnight",
+         "One announcement can move the rate 30% or more, long after the order price was agreed."),
+        ("Cash", "Converting early drains working capital",
+         "Buying the whole balance up front protects the price but ties up the cash you need to operate."),
+        ("Delivery", "Cheap quotes don't always arrive",
+         "Dealers that fill late or only partly force a rushed purchase at a worse rate, and a late supplier payment."),
+    ])
 
     # ---------------------------------------------------------------- benefits
-    ui.section("What TradeAhead gives you")
-    ui.grid([
-        ui.card("Predictable payments",
-                "Know in advance how many dollars you'll buy each day and what the invoice will cost, "
-                "instead of finding out on the due date.", icon=ICONS["calendar"]),
-        ui.card("No derivative risk",
-                "No forwards, options or margin calls. You only ever buy the currency you owe, through "
-                "licensed dealers, for an invoice you already have.", icon=ICONS["shield"]),
-        ui.card("Protected cash flow",
-                "Every plan respects the minimum cash balance you set, even if the currency weakens "
-                "sharply while it runs.", icon=ICONS["wallet"]),
-    ], min_width=260)
+    ui.section("What you get with TradeAhead")
+    ui.cols([
+        ("Predictable payments", "Know the cost before the due date",
+         "See how many dollars you'll buy each day and what the invoice will cost, instead of finding out on "
+         "the day you pay."),
+        ("No derivative risk", "Only buy what you owe",
+         "No forwards, options or margin calls. You buy the currency for an invoice you already have, through "
+         "licensed dealers."),
+        ("Protected cash flow", "Your buffer stays untouched",
+         "Every plan respects the minimum cash balance you set, even if the naira weakens sharply while it runs."),
+    ])
 
     # ---------------------------------------------------------------- how it works
-    ui.section("How it works", "From supplier invoice to supplier paid, in four steps.")
-    ui.html("""<div class="ta-flow">
-      <div class="ta-card"><span class="n">1</span><h3>Upload the invoice</h3><p>We read the amount, currency, terms and shipping dates from your PDF or CSV.</p></div>
-      <div class="ta-card"><span class="n">2</span><h3>Approve your plan</h3><p>Daily purchase amounts that fit your cash and remove most of the exchange-rate risk.</p></div>
-      <div class="ta-card"><span class="n">3</span><h3>We buy the currency</h3><p>Each purchase goes to the dealer with the best rate after delivery reliability.</p></div>
-      <div class="ta-card"><span class="n">4</span><h3>Your supplier is paid</h3><p>Funds wait at a licensed partner and are released on the bill of lading.</p></div>
-    </div>""")
+    ui.section("How it works")
+    ui.cols([
+        ("Step 1", "Upload the invoice", "We read the amount, currency, terms and shipping dates from your PDF or CSV."),
+        ("Step 2", "Approve your plan", "Daily purchase amounts that fit your cash and remove most of the exchange-rate risk."),
+        ("Step 3", "We buy the currency", "Each purchase goes to the dealer with the best rate after delivery reliability."),
+        ("Step 4", "Your supplier is paid", "Funds wait at a licensed partner and are released on the bill of lading."),
+    ])
 
     # ---------------------------------------------------------------- volatility simulator
     ui.section("See what a devaluation does to one invoice",
-               "Pick a currency pair and two dates to see how much the same invoice cost when it was paid. "
+               "Pick a currency and two dates to see how much the same invoice cost when it was paid. "
                "Rates are live from Yahoo Finance.")
     wide, source = workspace.fx_history()
     ref = workspace.reference()
-    pairs = fx.NGN_PAIRS + [p for p in fx.EGP_PAIRS if p.startswith("USD")]
     with st.container(key="card_fxsim"):
         a, b, c, d = st.columns([1.2, 1, 1, 1])
-        pair = a.selectbox("Currency pair", pairs, index=0, key="hist_pair")
+        pair = a.selectbox("Currency pair", fx.NGN_PAIRS, index=0, key="hist_pair")
         base, quote = pair.split("/")
         s = wide[pair].dropna()
         amount = b.number_input(f"Invoice amount ({base})", min_value=1_000, value=50_000, step=5_000,
@@ -141,15 +137,13 @@ def render() -> None:
             items = " · ".join(f"{r.start:%b %Y}: <b>{r.move:+.0%}</b>" for r in worst.itertuples())
             ui.html(f'<p class="ta-muted">Largest 30-day moves in {pair}: {items}. Source: {source}.</p>')
 
-    # ---------------------------------------------------------------- coverage + call to action
-    ui.section("Built for importers",
-               "Available for Nigerian importers paying in US dollars, Chinese yuan, euros, pounds and "
-               "Canadian dollars, and for Egyptian importers paying in dollars, yuan and euros.")
+    # ---------------------------------------------------------------- call to action
     st.write("")
     with st.container(key="cta"):
         l, r = st.columns([2.2, 1], vertical_alignment="center")
-        l.html("""<div><h2 style="font-size:24px;margin:0 0 .35rem">Try it on your next invoice</h2>
-            <p class="ta-muted" style="font-size:16px;margin:0">Download a sample invoice or upload your own.
-            No sign-up needed to see your plan.</p></div>""")
+        l.html("""<div><div class="ta-kicker">Nigeria pilot</div>
+            <h2 style="font-size:24px;margin:0 0 .35rem">Try it on your next invoice</h2>
+            <p class="ta-muted" style="font-size:16px;margin:0">For Nigerian importers paying in US dollars,
+            Chinese yuan, euros, pounds or Canadian dollars. Download a sample invoice or upload your own.</p></div>""")
         if r.button("Open the dashboard", type="primary", width="stretch", key="open_dash_bottom"):
             st.switch_page(PAGES["dashboard"])

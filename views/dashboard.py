@@ -15,6 +15,9 @@ from services.workspace import Sim
 from ui import charts
 from ui import components as ui
 
+# Markets open to customers. Add a market to data/generate.py, then list it here.
+LIVE_MARKETS = {"NG": "Nigeria (pilot)"}
+
 RISK_LEVELS = {"Accept risk": 0.3, "Balanced": 3.0, "Protect early": 10.0, "Maximum protection": 30.0}
 DRIFT_LABELS = {"implied": "Market-implied (default)", "historical": "Historical devaluations (stress)",
                 "recent": "Recent trend"}
@@ -97,8 +100,12 @@ def _sidebar(ref) -> tuple[str, Sim]:
     sb = st.sidebar
     sb.markdown("### Scenario simulator")
     sb.caption("Every change re-runs the plan, routing and 20,000 rate paths.")
-    labels = {"NG": "🇳🇬 Nigeria", "EG": "🇪🇬 Egypt"}
-    market_code = sb.radio("Market", list(labels), format_func=labels.get, key=_key("market", "NG"), horizontal=True)
+    if len(LIVE_MARKETS) > 1:
+        market_code = sb.radio("Market", list(LIVE_MARKETS), format_func=LIVE_MARKETS.get,
+                               key=_key("market", "NG"), horizontal=True)
+    else:
+        market_code = next(iter(LIVE_MARKETS))
+        sb.caption(f"Market: {LIVE_MARKETS[market_code]}")
 
     sb.markdown('<div class="ta-side-label">Protection</div>', unsafe_allow_html=True)
     cover = sb.slider("Share of the balance to protect", 0, 100, step=5, format="%d%%", key=_key("cover", 100))

@@ -4,7 +4,7 @@
 
 ## Overview
 
-TradeAhead is an FX planning and protection platform for importing SMEs in emerging markets, starting with Nigeria and then Egypt.
+TradeAhead is an FX planning and protection platform for importing SMEs in emerging markets, starting with a pilot in Nigeria.
 It turns a supplier invoice into a daily currency-buying plan the business can afford, sends each purchase to the dealer most likely to deliver on time, and pays the supplier when the goods ship.
 
 ## Quick Start
@@ -19,13 +19,11 @@ Optional: `pytest -q` runs the test suite, and `python data/generate.py` refresh
 
 ## Data Pipeline & FX Engine
 
-**Live rates.** `yfinance` downloads daily closing rates from Yahoo Finance for the US dollar against the naira, Egyptian pound, yuan, euro, pound sterling and Canadian dollar, from 2021 to today.
+**Live rates.** `yfinance` downloads daily closing rates from Yahoo Finance for the US dollar against the naira, yuan, euro, pound sterling and Canadian dollar, from 2021 to today.
 
-**Pairs the app shows.** Yahoo has no direct naira or pound crosses (for example, there is no CNY/NGN). We build each one from its two dollar rates: CNY/NGN = naira per dollar ÷ yuan per dollar.
-- Naira: USD, CNY, EUR, GBP, CAD → NGN.
-- Egyptian pound: USD, CNY, EUR → EGP.
+**Pairs the app shows.** Yahoo has no direct naira crosses (for example, there is no CNY/NGN). We build each one from its two dollar rates: CNY/NGN = naira per dollar ÷ yuan per dollar. This gives USD, CNY, EUR, GBP and CAD → NGN.
 
-Adding a currency takes one line in `services/fx.py`.
+Currencies and markets are configuration: adding one takes an entry in `services/fx.py` and `data/generate.py`.
 
 **Spike cleaning.** Free data feeds sometimes show one-day glitches. Each day's rate is compared with the median of the five days around it:
 - If it sits more than 7% away, it is treated as a glitch and replaced with that median.

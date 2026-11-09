@@ -50,7 +50,7 @@ def test_dashboard_blank_has_no_plan():
     {},
     {"cash": 30e6},                                   # coverage gap
     {"ccy": "CNY", "balance": 250_000.0},              # yuan invoice
-    {"market": "EG"},                                  # Egypt
+    {"ccy": "EUR", "balance": 30_000.0},               # euro invoice
     {"cover": 0}, {"cover": 50},
     {"tier": "Starter", "risk": "Maximum protection"},
     {"drift": "historical", "vol": 3.0, "jump": 4.0, "shock": 60, "shock_day": 30},

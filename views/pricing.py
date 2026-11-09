@@ -87,7 +87,7 @@ def render() -> None:
                            index=None, placeholder="Choose")
         volume = b.selectbox("Monthly supplier payments", ["Under $25k", "$25k–100k", "$100k–500k", "Over $500k"],
                              index=None, placeholder="Choose")
-        markets = st.multiselect("Where you import into", ["Nigeria", "Egypt", "Ghana", "Kenya", "Pakistan"])
+        markets = st.text_input("City or state you import into", placeholder="e.g. Lagos")
         message = st.text_area("What would you like to protect?", placeholder="e.g. monthly yuan invoices from Guangzhou")
         consent = st.checkbox("I agree to be contacted by TradeAhead about my enquiry. *")
         sent = st.form_submit_button("Send", type="primary")
@@ -100,7 +100,7 @@ def render() -> None:
         else:
             _save_lead({"received": datetime.now().isoformat(timespec="seconds"), "name": name.strip(),
                         "company": company.strip(), "email": email.strip(), "phone": phone.strip(),
-                        "role": role or "", "volume": volume or "", "markets": "; ".join(markets),
+                        "role": role or "", "volume": volume or "", "markets": markets.strip(),
                         "message": message.strip()})
             l.success(f"Thank you, {name.split()[0]}. We will be in touch shortly.")
     with r:

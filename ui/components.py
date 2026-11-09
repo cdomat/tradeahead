@@ -9,7 +9,7 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 
-FX_SYMBOLS = {"USD": "$", "CNY": "CN¥", "EUR": "€", "GBP": "£", "CAD": "C$", "NGN": "₦", "EGP": "E£"}
+FX_SYMBOLS = {"USD": "$", "CNY": "CN¥", "EUR": "€", "GBP": "£", "CAD": "C$", "NGN": "₦"}
 
 
 # ---------------------------------------------------------------- setup
@@ -131,10 +131,15 @@ def alert(body: str, tone: str = "info") -> None:
     html(f'<div class="ta-alert ta-alert--{tone}">{body}</div>')
 
 
-def card(title: str, body: str, extra: str = "", icon: str = "") -> str:
-    """A light card. `icon` is a short glyph shown in a tinted square above the title."""
-    return (f'<div class="ta-card">{f"<div class=ta-icon>{icon}</div>" if icon else ""}'
-            f'<h3>{escape(title)}</h3><p>{body}</p>{extra}</div>')
+def card(title: str, body: str, extra: str = "") -> str:
+    return f'<div class="ta-card"><h3>{escape(title)}</h3><p>{body}</p>{extra}</div>'
+
+
+def cols(items: list[tuple[str, str, str]]) -> None:
+    """Plain text columns under an orange rule. items: (kicker, title, body); kicker may be ''."""
+    cells = "".join(f'<div class="ta-col">{f"<div class=ta-kicker>{escape(k)}</div>" if k else ""}'
+                    f'<h3>{escape(t)}</h3><p>{body}</p></div>' for k, t, body in items)
+    html(f'<div class="ta-cols">{cells}</div>')
 
 
 def grid(cards: list[str], min_width: int = 240) -> None:

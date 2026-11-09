@@ -17,12 +17,12 @@ def render() -> None:
               "TradeAhead plans how much currency to buy and when, chooses who to buy it from, and pays your "
               "supplier. Licensed banks and payment partners hold and move the money.")
 
-    ui.html("""<div class="ta-flow">
-      <div class="ta-card"><span class="n">1</span><h3>Upload the invoice</h3><p>Amount, currency, terms and shipping dates are read from the PDF or CSV.</p></div>
-      <div class="ta-card"><span class="n">2</span><h3>Get a protection plan</h3><p>Daily purchase amounts that stay within your cash buffer.</p></div>
-      <div class="ta-card"><span class="n">3</span><h3>Route each purchase</h3><p>Best rate after accounting for each dealer's delivery record.</p></div>
-      <div class="ta-card"><span class="n">4</span><h3>Pay the supplier</h3><p>Held at a licensed partner, released on the bill of lading.</p></div>
-    </div>""")
+    ui.cols([
+        ("Step 1", "Upload the invoice", "Amount, currency, terms and shipping dates are read from the PDF or CSV."),
+        ("Step 2", "Get a protection plan", "Daily purchase amounts that stay within your cash buffer."),
+        ("Step 3", "Route each purchase", "Best rate after accounting for each dealer's delivery record."),
+        ("Step 4", "Pay the supplier", "Held at a licensed partner, released on the bill of lading."),
+    ])
 
     ui.section("Features", "Choose a feature to see what it does, with a live example on today's rates.")
     choice = st.segmented_control("Feature", FEATURES, default=FEATURES[0], key="tech_el",
@@ -38,14 +38,14 @@ def render() -> None:
         _plan_demo(wide)
 
     ui.section("Who does what")
-    ui.grid([
-        ui.card("TradeAhead", "Reads your invoices, builds and updates the protection plan, chooses the dealer "
-                "for each purchase and sends the payment instructions."),
-        ui.card("Licensed partners", "Banks and licensed FX and payment providers hold your local currency and "
-                "dollars, carry out each purchase and pay your supplier."),
-        ui.card("You", "Set your cash buffer and how much of each invoice to protect, approve the plan, and "
-                "stay in control of every payment."),
-    ], min_width=260)
+    ui.cols([
+        ("TradeAhead", "Plans and routes", "Reads your invoices, builds and updates the protection plan, chooses "
+         "the dealer for each purchase and sends the payment instructions."),
+        ("Licensed partners", "Hold and move the money", "Banks and licensed FX and payment providers hold your "
+         "naira and dollars, carry out each purchase and pay your supplier."),
+        ("You", "Stay in control", "Set your cash buffer and how much of each invoice to protect, approve the "
+         "plan, and see every payment before it goes out."),
+    ])
 
     st.write("")
     if st.button("Try it with your own invoice", type="primary"):
@@ -56,13 +56,13 @@ def _intro(what: str, benefits: list[str]) -> None:
     items = "".join(f"<li>{b}</li>" for b in benefits)
     ui.html(f"""<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;
       margin:.6rem 0 1rem"><p style="margin:0">{what}</p>
-      <div><b style="color:var(--ink)">What you get</b><ul style="margin:.3rem 0 0;padding-left:1.1rem">{items}</ul></div>
+      <div><div class="ta-kicker">What you get</div><ul style="margin:.3rem 0 0;padding-left:1.1rem">{items}</ul></div>
       </div>""")
 
 
 def _plan_demo(wide) -> None:
     _intro("Sets how many dollars to buy on each trading day before your payment is due. Buying early removes "
-           "exchange-rate risk but gives up interest on your local-currency deposits, and buying everything in "
+           "exchange-rate risk but gives up interest on your naira deposits, and buying everything in "
            "one day gets a worse rate. The plan balances the three, and <b>never lets your cash fall below the "
            "buffer you set</b>, even if the currency weakens sharply while it runs.",
            ["A day-by-day purchase schedule you can approve",
