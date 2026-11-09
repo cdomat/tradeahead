@@ -1,6 +1,6 @@
 # TradeAhead
 
-🚀 **Live App:** [Launch TradeAhead Streamlit Dashboard](YOUR_STREAMLIT_URL_HERE)
+🚀 **Live App:** [tradeahead.streamlit.app](https://tradeahead.streamlit.app)
 
 ## Overview
 
