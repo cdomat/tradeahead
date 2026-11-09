@@ -7,16 +7,6 @@
 TradeAhead is an FX planning and protection platform for importing SMEs in emerging markets, starting with a pilot in Nigeria.
 It turns a supplier invoice into a daily currency-buying plan the business can afford, sends each purchase to the dealer most likely to deliver on time, and pays the supplier when the goods ship.
 
-## Quick Start
-
-```bash
-git clone https://github.com/cdomat/TradeAhead.git && cd TradeAhead
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-Optional: `pytest -q` runs the test suite, and `python data/generate.py` refreshes the saved FX snapshot and reference data.
-
 ## Data Pipeline & FX Engine
 
 **Live rates.** `yfinance` downloads daily closing rates from Yahoo Finance for the US dollar against the naira, yuan, euro, pound sterling and Canadian dollar, from 2021 to today.
