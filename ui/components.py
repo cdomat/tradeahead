@@ -79,6 +79,11 @@ def section(title: str, body: str = "") -> None:
     html(f"""<div class="ta-section"><h2>{escape(title)}</h2>{f'<p>{body}</p>' if body else ''}</div>""")
 
 
+def subhead(title: str, note: str = "") -> None:
+    """A small heading inside a page or tab, with breathing room above it."""
+    html(f'<div class="ta-subhead">{escape(title)}{f" <span>· {escape(note)}</span>" if note else ""}</div>')
+
+
 def ticker(pair: str, value: float, change: float, source: str, as_of) -> str:
     cls = "up" if change > 0 else "down"
     arrow = "▲" if change > 0 else "▼"

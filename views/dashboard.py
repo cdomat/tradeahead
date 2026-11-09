@@ -288,15 +288,15 @@ def _plan_tab(res, inv, cash, ref, m, sim) -> None:
 
     l, r = st.columns(2, gap="large")
     with l:
-        ui.html(f"<b>{'Dollars' if ccy == 'USD' else ccy} bought over time</b>")
+        ui.subhead(f"{'Dollars' if ccy == 'USD' else ccy} bought over time")
         st.plotly_chart(charts.accumulation(sched, p.target_fx, float(inv["balance"]), ccy),
                         config=charts.CONFIG, theme=None, width="stretch")
     with r:
-        ui.html("<b>Your cash stays above the buffer</b>")
+        ui.subhead("Your cash stays above the buffer")
         st.plotly_chart(charts.cash_vs_buffer(sched, cash["buffer"], local), config=charts.CONFIG, theme=None, width="stretch")
 
     buys = sched[sched["buy_fx"] > 0]
-    ui.html(f"<b>Purchase schedule</b> <span class='ta-muted'>· {len(buys)} purchases</span>")
+    ui.subhead("Purchase schedule", f"{len(buys)} purchases")
     ui.table([("Date", ""), (f"Buy ({ccy})", "r"), ("Expected rate", "r"), (f"Cost ({local})", "r"),
               ("Protected so far", ""), ("Cash above buffer", "r")],
              [[f"{pd.Timestamp(r.date):%a %d %b}", ui.money(r.buy_fx, ccy), ui.rate(r.expected_rate),
@@ -329,7 +329,7 @@ def _routing_tab(res, inv, cash, ref, m, sim) -> None:
             ui.alert(f"<b>{cheapest['dealer']}</b> quotes the lowest rate, but <b>{best['dealer']}</b> delivers on "
                      f"time more often ({best['on_time_p']:.0%} vs. {cheapest['on_time_p']:.0%}). Once the cost of a "
                      f"late delivery is counted, {best['dealer']} is cheaper, so we use it first.", "info")
-        ui.html("<b>How we chose the dealer for your first purchase</b>")
+        ui.subhead("How we chose the dealer for your first purchase")
         ui.table([("Dealer", ""), ("Quoted rate", "r"), ("On-time record", ""), ("Rank by quote", "c"),
                   ("Our rank", "c")],
                  [[f"<b>{r.dealer}</b>", ui.rate(r.screen_rate), f"{ui.bar(r.on_time_p)}{r.on_time_p:.0%}",
@@ -341,7 +341,7 @@ def _routing_tab(res, inv, cash, ref, m, sim) -> None:
 
     split = legs.groupby("dealer", as_index=False).agg(n=("amount_fx", "size"), usd=("amount_fx", "sum"))
     split = split.sort_values("usd", ascending=False)
-    ui.html("<b>Where your purchases go</b>")
+    ui.subhead("Where your purchases go")
     ui.table([("Dealer", ""), ("Purchases", "r"), ("Amount (USD)", "r"), ("Share", "")],
              [[r.dealer, f"{r.n}", f"{r.usd:,.0f}", f"{ui.bar(r.usd / split['usd'].sum())}{r.usd / split['usd'].sum():.0%}"]
               for r in split.itertuples()])
@@ -439,7 +439,7 @@ def _savings_tab(res, inv, cash, ref, m, sim) -> None:
              "It pays off when the naira falls, and against the parallel market, where many importers buy "
              "today, it saves money in most cases.", "info")
 
-    ui.html(f"<b>What the invoice costs if the naira falls {sim.shock:.0%} in {sim.shock_day} trading days</b>")
+    ui.subhead(f"What the invoice costs if the naira falls {sim.shock:.0%} in {sim.shock_day} trading days")
     costs = {"TradeAhead plan": shock["plan_cost"]} | shock["baselines"]
     st.plotly_chart(charts.shock_bars(costs, local, height=230), config=charts.CONFIG, theme=None, width="stretch")
     ui.html("<p class='ta-muted'>Change the size and timing of the fall on the left.</p>")
