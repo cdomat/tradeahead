@@ -47,12 +47,9 @@ MARKETS = {
 }
 
 TIERS = {
-    "Starter": {"price_month": 0, "fx_margin": 0.010,
-                "features": ["Invoice upload", "Exposure dashboard", "Manual conversions"]},
-    "Growth": {"price_month": 49, "fx_margin": 0.008,
-               "features": ["Protection plan", "Target-rate rules", "Direct supplier payment"]},
-    "Pro": {"price_month": 149, "fx_margin": 0.006,
-            "features": ["Cash-flow forecasting", "Routing reports", "Multi-user access"]},
+    "Starter": {"price_month": 0, "fx_margin": 0.010},
+    "Growth": {"price_month": 49, "fx_margin": 0.008},
+    "Pro": {"price_month": 149, "fx_margin": 0.006},
 }
 
 # ---------------------------------------------------------------- Historical shocks

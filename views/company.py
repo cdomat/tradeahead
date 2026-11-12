@@ -1,4 +1,4 @@
-"""Company: landing page for importers. Problem, benefits, how it works, and a live FX shock simulator."""
+"""Company: landing page for importers. Problem, benefits, a devaluation simulator and the next step."""
 
 from datetime import date
 
@@ -33,11 +33,11 @@ def _preview_card() -> str:
     if more > 0:
         rows += f'<tr><td class="ta-muted" colspan="3">+ {more} more purchases</td></tr>'
     return f"""<div class="ta-card ta-preview">
-      <h4>Sample supplier invoice</h4>
+      <h4>Sample protection plan</h4>
       <div class="amt">$40,000 <span class="ta-muted">due in 15 trading days</span></div>
       <table>{rows}</table>
-      <div class="foot">{risk_cut:.0%} of the exchange-rate risk removed. ₦18m cash buffer never touched.
-      Sample plan at today's rate of ₦{v:,.0f} per dollar.</div></div>"""
+      <div class="foot"><b>{risk_cut:.0%}</b> of the exchange-rate risk removed. Your ₦18m cash buffer is
+      never touched. Based on today's rate of ₦{v:,.0f} per dollar.</div></div>"""
 
 
 def render() -> None:
@@ -47,8 +47,8 @@ def render() -> None:
         ui.html("""<div class="ta-hero">
           <div class="ta-kicker">Now piloting with importers in Nigeria</div>
           <h1>Pay foreign suppliers on time, at a cost you can plan.</h1>
-          <p>TradeAhead turns each supplier invoice into a daily currency-buying plan your cash can afford,
-          buys through the dealers most likely to deliver, and pays your supplier when the goods ship.</p>
+          <p>Upload a supplier invoice and TradeAhead builds a protection plan your cash can afford, buys the
+          currency through dealers that deliver on time, and pays your supplier when the goods ship.</p>
         </div>""")
         st.write("")
         c1, c2, _ = st.columns([1.1, 1, 0.6])
@@ -56,7 +56,8 @@ def render() -> None:
             st.switch_page(PAGES["dashboard"])
         if c2.button("How it works", width="stretch"):
             st.switch_page(PAGES["product"])
-        ui.html('<div class="ta-trust">No derivatives. Funds held by licensed partners. Free to start.</div>')
+        ui.html('<div class="ta-trust">No derivatives <span>·</span> Funds held by licensed partners '
+                '<span>·</span> Free to start</div>')
     with right:
         ui.html(_preview_card())
 
@@ -89,8 +90,7 @@ def render() -> None:
 
     # ---------------------------------------------------------------- volatility simulator
     ui.section("See what a devaluation does to one invoice",
-               "Pick a currency and two dates to see how much the same invoice cost when it was paid. "
-               "Rates are live from Yahoo Finance.")
+               "Pick two dates: when the order was placed and when the balance was paid.")
     wide, source = workspace.fx_history()
     ref = workspace.reference()
     with st.container(key="card_fxsim"):
@@ -128,6 +128,6 @@ def render() -> None:
         l.html("""<div><div class="ta-kicker">Nigeria pilot</div>
             <h2 style="font-size:24px;margin:0 0 .35rem">Try it on your next invoice</h2>
             <p class="ta-muted" style="font-size:16px;margin:0">For Nigerian importers paying in US dollars,
-            Chinese yuan, euros, pounds or Canadian dollars. Download a sample invoice or upload your own.</p></div>""")
+            Chinese yuan, euros, pounds or Canadian dollars. Upload an invoice, or try it with our sample.</p></div>""")
         if r.button("Open the dashboard", type="primary", width="stretch", key="open_dash_bottom"):
             st.switch_page(PAGES["dashboard"])

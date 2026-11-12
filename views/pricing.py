@@ -15,18 +15,24 @@ from ui import components as ui
 LEADS = Path(__file__).resolve().parents[1] / "data" / "leads.csv"
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# One list drives both the plan cards and the comparison table. Names match the Dashboard steps.
 FEATURES = [
-    ("Invoice upload and reading", {"Starter", "Growth", "Pro"}),
-    ("Exposure dashboard", {"Starter", "Growth", "Pro"}),
-    ("Manual conversions", {"Starter", "Growth", "Pro"}),
-    ("Cash-constrained protection plan", {"Growth", "Pro"}),
-    ("Target-rate rules", {"Growth", "Pro"}),
-    ("Direct supplier payment on B/L", {"Growth", "Pro"}),
-    ("Delivery-weighted routing", {"Growth", "Pro"}),
-    ("Cash-flow forecasting", {"Pro"}),
-    ("Routing reports", {"Pro"}),
-    ("Multi-user access", {"Pro"}),
+    ("Invoice upload and reading", "Starter"),
+    ("Overview of what you owe in each currency", "Starter"),
+    ("Convert when you choose", "Starter"),
+    ("Protection plan that keeps your cash buffer", "Growth"),
+    ("Best route: dealers that deliver on time", "Growth"),
+    ("Supplier paid when the goods ship", "Growth"),
+    ("Buy automatically at a target rate", "Growth"),
+    ("Cash-flow forecasting", "Pro"),
+    ("Monthly cost and savings reports", "Pro"),
+    ("Access for your whole team", "Pro"),
 ]
+TIER_COPY = {
+    "Starter": ("See what you owe and convert when you choose.", "Start free", "dashboard"),
+    "Growth": ("Protect every invoice without touching your cash buffer.", "Try it on an invoice", "dashboard"),
+    "Pro": ("For businesses paying suppliers every month.", "Talk to our team", "#contact"),
+}
 
 
 def render() -> None:
@@ -35,27 +41,32 @@ def render() -> None:
               "A monthly plan for the planning tools, plus a clear FX margin on each conversion. "
               "No onboarding fee, and you can start for free.")
 
+    names = list(tiers)
     cards = []
-    for name, t in tiers.items():
+    for i, (name, t) in enumerate(tiers.items()):
         featured = name == "Growth"
+        tagline, cta, target = TIER_COPY[name]
         price = "Free" if t["price_month"] == 0 else f"${t['price_month']}<small> / month</small>"
-        items = "".join(f"<li>{f}</li>" for f in t["features"])
+        lead = f"<li class='lead'>Everything in {names[i - 1]}, plus:</li>" if i else ""
+        items = lead + "".join(f"<li>{f}</li>" for f, tier in FEATURES if tier == name)
         badge = f'<span class="badge">{ui.pill("Most popular", "brand")}</span>' if featured else ""
         cards.append(f"""<div class="ta-tier{' ta-tier--featured' if featured else ''}">{badge}
-            <h3>{name}</h3><div class="price">{price}</div>
-            <div class="ta-muted">+ {t['fx_margin']:.1%} FX margin per conversion</div><ul>{items}</ul></div>""")
+            <h3>{name}</h3><p class="ta-muted tagline">{tagline}</p><div class="price">{price}</div>
+            <div class="ta-muted">+ {t['fx_margin']:.1%} FX margin per conversion</div><ul>{items}</ul>
+            <a class="ta-tier-cta{' primary' if featured else ''}" href="{target}" target="_self">{cta}</a></div>""")
     ui.grid(cards, min_width=260)
 
-    ui.section("What each plan includes")
-    names = list(tiers)
+    ui.section("Compare plans")
     ui.table([("Feature", "")] + [(n, "c") for n in names],
-             [[f] + ["<span class='ta-check'>✓</span>" if n in inc else "<span class='ta-dash'>—</span>" for n in names]
-              for f, inc in FEATURES] +
+             [[f] + ["<span class='ta-check'>✓</span>" if names.index(n) >= names.index(tier)
+                     else "<span class='ta-dash'>—</span>" for n in names]
+              for f, tier in FEATURES] +
              [["<b>Monthly price</b>"] + [("Free" if tiers[n]["price_month"] == 0 else f"${tiers[n]['price_month']}")
                                           for n in names],
-              ["<b>FX margin</b>"] + [f"{tiers[n]['fx_margin']:.1%}" for n in names]])
+              ["<b>FX margin per conversion</b>"] + [f"{tiers[n]['fx_margin']:.1%}" for n in names]])
 
-    ui.section("What you would pay in a typical month")
+    ui.section("What you would pay in a typical month",
+               "The monthly price plus the FX margin on what you convert. No other fees.")
     with st.container(key="card_calc"):
         a, b = st.columns([1, 2])
         volume = a.number_input("Supplier payments per month (USD)", min_value=0, value=None, step=10_000,
@@ -74,6 +85,7 @@ def render() -> None:
                        "total cost of each plan.</p>", unsafe_allow_html=True)
 
     with st.container(key="band_tint_contact"):
+        ui.html('<div id="contact"></div>')
         ui.section("Talk to our team",
                    "Tell us about your suppliers and payment cycle, and we'll set up your first protection plan with you.")
         l, _ = st.columns([1.6, 1], gap="large")

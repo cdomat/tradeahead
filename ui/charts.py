@@ -151,11 +151,11 @@ def eri_chart(eri: pd.DataFrame, names: dict[str, str], bucket_order: list[str],
     dashes = ["solid", "solid", "dash", "dot", "dashdot"]
     for i, (dealer, g) in enumerate(e.groupby("dealer", sort=False)):
         fig.add_trace(go.Scatter(
-            x=g["bucket"], y=g["exec_bps"], mode="lines+markers", name=dealer,
+            x=g["bucket"], y=g["exec_bps"] / 100, mode="lines+markers", name=dealer,
             line=dict(color=palette[i % 5], width=2, dash=dashes[i % 5]), marker=dict(size=8),
-            customdata=np.c_[g["quoted_bps"], g["on_time_p"] * 100, g["n_fills"]],
-            hovertemplate=(dealer + "<br>Executed %{y:.0f} bps (quoted %{customdata[0]:.0f})"
-                           "<br>On time %{customdata[1]:.0f}% · %{customdata[2]} fills<extra></extra>")))
-    fig.update_layout(height=height, hovermode="closest", yaxis_title="Cost over mid-market (bps)",
-                      xaxis=dict(categoryorder="array", categoryarray=bucket_order, title="Ticket size (USD)"))
+            customdata=np.c_[g["quoted_bps"] / 100, g["on_time_p"] * 100, g["n_fills"]],
+            hovertemplate=(dealer + "<br>Paid %{y:.2f}% above mid-market (quoted %{customdata[0]:.2f}%)"
+                           "<br>On time %{customdata[1]:.0f}% · %{customdata[2]} trades<extra></extra>")))
+    fig.update_layout(height=height, hovermode="closest", yaxis_title="Paid above mid-market (%)",
+                      xaxis=dict(categoryorder="array", categoryarray=bucket_order, title="Purchase size (USD)"))
     return fig

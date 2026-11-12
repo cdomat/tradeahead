@@ -217,3 +217,22 @@ a{color:var(--ember);}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;}
 }
+
+/* pricing cards: tagline, "everything in" lead, call to action */
+.ta-trust span{margin:0 .35rem;color:var(--line);}
+.ta-tier{display:flex;flex-direction:column;}
+.ta-tier .tagline{margin:0 0 1rem;font-size:14px;min-height:2.6em;}
+.ta-tier li.lead{color:var(--muted);font-size:13px;}
+.ta-tier li.lead::before{content:"";margin:0;}
+.ta-tier ul{flex:1;}
+.ta-tier-cta{display:block;margin-top:1.3rem;padding:.65rem 1rem;border-radius:10px;text-align:center;font-weight:600;
+  font-size:15px;text-decoration:none!important;color:var(--ink)!important;border:1px solid var(--line);
+  transition:background .25s ease,border-color .25s ease;}
+.ta-tier-cta:hover{border-color:var(--ink);background:var(--canvas);}
+.ta-tier-cta.primary{background:var(--ember);border-color:var(--ember);color:#fff!important;}
+.ta-tier-cta.primary:hover{background:var(--ember-l);border-color:var(--ember-l);}
+#contact{scroll-margin-top:80px;}
+/* four columns: one row on wide screens, two by two otherwise, never three plus one */
+.ta-cols:has(>.ta-col:nth-child(4)){grid-template-columns:repeat(2,1fr);}
+@media (min-width:1100px){.ta-cols:has(>.ta-col:nth-child(4)){grid-template-columns:repeat(4,1fr);}}
+@media (max-width:640px){.ta-cols:has(>.ta-col:nth-child(4)){grid-template-columns:1fr;}}
