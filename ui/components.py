@@ -60,6 +60,8 @@ STATUS_TONES = {
     "Fully protected": "ok", "Partly protected": "info", "Coverage gap": "warn", "Not protected": "risk",
     "Convert": "brand", "Hold": "neutral", "Settlement": "info", "Scheduled": "neutral",
     "Held at partner": "ok", "Paid": "ok", "Awaiting B/L": "warn",
+    "Details missing": "neutral", "Waiting for approval": "warn", "Buying currency": "brand",
+    "Ready to pay": "info",
 }
 
 

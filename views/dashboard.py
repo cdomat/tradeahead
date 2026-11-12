@@ -68,13 +68,6 @@ def render() -> None:
     market_code = next(iter(LIVE_MARKETS))
     m = ref["markets"][market_code]
     local = m["local"]
-    cover, when = _sidebar()
-
-    # The fall-in-the-naira control sits in the plan tab, but the run needs its value first.
-    shock = st.session_state[_key("shock", 30)]
-    shock_when = st.session_state[_key("shock_when", "Next week")]
-    sim = Sim(cover=cover / 100, risk_aversion=WHEN_TO_BUY.get(when, 3.0), tier=TIER,
-              shock=shock / 100, shock_day=SHOCK_WHEN.get(shock_when, 5))
 
     ccy = _get("ccy") or "USD"
     pair = f"{ccy}/{local}" if f"{ccy}/{local}" in m["pairs"] else m["default_pair"]
@@ -84,10 +77,17 @@ def render() -> None:
               "Add a supplier invoice and your cash position, approve the plan, then follow each purchase "
               "through to the supplier payment.",
               right=ui.ticker(pair, v, chg, "live" if "live" in source else source.lower(), as_of))
+    overview = st.container(key="overview")  # filled once the plan has run
 
     tabs = st.tabs(["1 · Invoice & cash", "2 · Your plan", "3 · Best route", "4 · Supplier payment"])
     with tabs[0]:
-        _workbench(m)
+        cover, when = _workbench(m)
+
+    # The fall-in-the-naira control sits in the plan tab, but the run needs its value first.
+    shock = st.session_state[_key("shock", 30)]
+    shock_when = st.session_state[_key("shock_when", "Next week")]
+    sim = Sim(cover=cover / 100, risk_aversion=WHEN_TO_BUY.get(when, 3.0), tier=TIER,
+              shock=shock / 100, shock_day=SHOCK_WHEN.get(shock_when, 5))
 
     inv, cash = _invoice(), _cash()
     res = None
@@ -106,35 +106,47 @@ def render() -> None:
                 ui.alert(res["error"], "warn")
             else:
                 fn(res, inv, cash, m, sim, approval)
+    with overview:
+        _overview(inv, res, approval)
 
 
-# ---------------------------------------------------------------- sidebar: two choices only
+# ---------------------------------------------------------------- overview under the header
 
-def _sidebar() -> tuple[int, str]:
-    sb = st.sidebar
-    sb.markdown("### Your protection")
-    sb.caption(f"Market: {LIVE_MARKETS['NG']}")
-    cover = sb.slider("Share of the balance to protect", 0, 100, step=5, format="%d%%", key=_key("cover", 100),
-                      help="The rest is bought on the due date at that day's rate.")
-    when = sb.select_slider("When to buy", list(WHEN_TO_BUY), key=_key("when", "Balanced"),
-                            help="Lock in early buys sooner: less exchange-rate risk, but your naira earns "
-                                 "less interest. Flexible waits longer.")
-    _save("cover", "when")
-    sb.caption("Your cash buffer is set in step 1. The plan never goes below it.")
+def _overview(inv, res, approval) -> None:
+    """One line per invoice in the workspace, visible from every tab."""
+    if not inv:
+        return
+    ccy = inv["ccy"]
+    protected = "—"
+    if res is None:
+        status = "Details missing"
+    elif "error" in res:
+        status = "Details missing"
+    else:
+        p = res["plan"]
+        protected = f"{ui.bar(p.planned_fx / float(inv['balance']))}{p.planned_fx / float(inv['balance']):.0%}"
+        if st.session_state.get(f"bl_{inv['invoice_no']}_{inv['due_date']}"):
+            status = "Paid"
+        elif not st.session_state.get(approval):
+            status = "Waiting for approval"
+        else:
+            last = p.schedule.loc[p.schedule["buy_fx"] > 0, "date"].max() if p.planned_fx else None
+            status = "Ready to pay" if last is None or last < date.today() else "Buying currency"
+    ui.table([("Supplier", ""), ("Invoice", ""), ("Balance", "r"), ("Due", ""), ("Protected", ""), ("Status", "")],
+             [[f"<b>{inv['supplier']}</b>", inv["invoice_no"] or "—", ui.money(float(inv["balance"]), ccy),
+               f"{inv['due_date']:%d %b %Y}", protected, ui.status_pill(status)]])
 
-    sb.write("")
-    if sb.button("Start over", width="stretch"):
-        st.session_state.pop("_dash", None)
-        for k in list(st.session_state):
-            if k.startswith(("w_", "_parsed", "approved_", "bl_")):
-                del st.session_state[k]
-        st.rerun()
-    return cover, when
+
+def _start_over() -> None:
+    st.session_state.pop("_dash", None)
+    for k in list(st.session_state):
+        if k.startswith(("w_", "_parsed", "approved_", "bl_")):
+            del st.session_state[k]
 
 
 # ---------------------------------------------------------------- tab 1: invoice and cash
 
-def _workbench(m) -> None:
+def _workbench(m) -> tuple[int, str]:
     local = m["local"]
     currencies = [p.split("/")[0] for p in m["pairs"]]
     left, right = st.columns([1.35, 1], gap="large")
@@ -188,12 +200,25 @@ def _workbench(m) -> None:
                         format="%.0f", key=_key("outflow"), placeholder="Optional, e.g. 25,000,000")
         _save(*CASH_KEYS)
 
-        inv, cash = _invoice(), _cash()
-        st.write("")
-        ui.html("<p>" + (ui.pill("Invoice complete", "ok") if inv else ui.pill("Invoice incomplete", "warn")) + " " +
-                (ui.pill("Cash complete", "ok") if cash else ui.pill("Cash incomplete", "warn")) + "</p>")
+    with right, st.container(key="card_protection"):
+        ui.html('<h3 style="margin:0 0 .6rem;font-size:18px">Your protection</h3>')
+        cover = st.slider("Share of the balance to protect", 0, 100, step=5, format="%d%%", key=_key("cover", 100),
+                          help="The rest is bought on the due date at that day's rate.")
+        when = st.select_slider("When to buy", list(WHEN_TO_BUY), key=_key("when", "Balanced"),
+                                help="Lock in early buys sooner: less exchange-rate risk, but your naira earns "
+                                     "less interest. Flexible waits longer.")
+        _save("cover", "when")
+
+    inv, cash = _invoice(), _cash()
+    l, r = st.columns([3, 1], vertical_alignment="center")
+    with l:
         if inv and cash:
             ui.alert("Your plan is ready. Open <b>2 · Your plan</b> above.", "ok")
+        else:
+            ui.html("<p>" + (ui.pill("Invoice complete", "ok") if inv else ui.pill("Invoice incomplete", "warn"))
+                    + " " + (ui.pill("Cash complete", "ok") if cash else ui.pill("Cash incomplete", "warn")) + "</p>")
+    r.button("Start over", width="stretch", on_click=_start_over)
+    return cover, when
 
 
 @st.cache_data(show_spinner=False)
@@ -305,7 +330,7 @@ def _plan_tab(res, inv, cash, m, sim, approval) -> None:
         c1, c2 = st.columns([3, 1], vertical_alignment="center")
         with c1:
             ui.alert(f"<b>Plan approved.</b> The first purchase is on {pd.Timestamp(buys['date'].iloc[0]):%d %b}. "
-                     "Changing the settings on the left asks you to approve again.", "ok")
+                     "If you change your protection settings in step 1, you approve again.", "ok")
         if c2.button("Withdraw approval", width="stretch"):
             st.session_state[approval] = False
             st.rerun()

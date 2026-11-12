@@ -63,6 +63,8 @@ def test_dashboard_settings(extra):
     text = " ".join(m.value for m in at.markdown)
     assert "to continue" not in text
     assert "Plan status" in text and "What this plan saves you" in text
+    assert "Waiting for approval" in text  # overview line under the header
+    assert not at.sidebar.children  # protection settings live in step 1, not the sidebar
 
 
 def test_contact_form(tmp_path, monkeypatch):
@@ -86,3 +88,10 @@ def test_dashboard_approve_then_ship():
     assert "Plan approved." in text() and "Approve the plan in" not in text()
     next(b for b in at.button if b.label == "Demo: goods have shipped").click().run()
     assert "Payment sent" in text() and "less than buying on the parallel market" in text()
+    assert "Waiting for approval" not in text()
+
+
+def test_dashboard_start_over():
+    at = run("dashboard", dict(BASE))
+    next(b for b in at.button if b.label == "Start over").click().run()
+    assert "to continue" in " ".join(m.value for m in at.markdown)
