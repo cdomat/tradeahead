@@ -208,16 +208,17 @@ def _workbench(m) -> tuple[int, str]:
                                 help="Lock in early buys sooner: less exchange-rate risk, but your naira earns "
                                      "less interest. Flexible waits longer.")
         _save("cover", "when")
+        st.caption("Your cash buffer is never used, whatever you choose here.")
 
     inv, cash = _invoice(), _cash()
-    l, r = st.columns([3, 1], vertical_alignment="center")
+    l, r = st.columns([1.35, 1], gap="large", vertical_alignment="center")  # same grid as the cards
     with l:
         if inv and cash:
             ui.alert("Your plan is ready. Open <b>2 · Your plan</b> above.", "ok")
         else:
             ui.html("<p>" + (ui.pill("Invoice complete", "ok") if inv else ui.pill("Invoice incomplete", "warn"))
                     + " " + (ui.pill("Cash complete", "ok") if cash else ui.pill("Cash incomplete", "warn")) + "</p>")
-    r.button("Start over", width="stretch", on_click=_start_over)
+    r.button("Start over", type="tertiary", icon=":material/restart_alt:", width="stretch", on_click=_start_over)
     return cover, when
 
 
