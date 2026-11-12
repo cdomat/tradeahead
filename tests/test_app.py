@@ -24,7 +24,7 @@ def _page(name):
 DUE = (pd.Timestamp(date.today()) + pd.offsets.BDay(16)).date()
 BASE = {"supplier": "Test Co", "invoice_no": "PI-1", "ccy": "USD", "balance": 34_905.5,
         "bl_date": DUE - timedelta(days=5), "due_date": DUE, "deposit_paid": True,
-        "cash": 60e6, "buffer": 18e6, "inflow": 2.5e6, "outflow": 1.2e6}
+        "cash": 60e6, "buffer": 18e6, "inflow": 52.5e6, "outflow": 25.2e6}
 
 
 def run(name, state=None):
@@ -52,8 +52,9 @@ def test_dashboard_blank_has_no_plan():
     {"ccy": "CNY", "balance": 250_000.0},              # yuan invoice
     {"ccy": "EUR", "balance": 30_000.0},               # euro invoice
     {"cover": 0}, {"cover": 50},
-    {"tier": "Starter", "risk": "Maximum protection"},
-    {"drift": "historical", "vol": 3.0, "jump": 4.0, "shock": 60, "shock_day": 30},
+    {"when": "Lock in early"}, {"when": "Flexible"},
+    {"shock": 60, "shock_when": "In two weeks"},
+    {"inflow": None, "outflow": None},                 # optional monthly flows left blank
     {"cash": 10e6},                                    # below the buffer today
 ])
 def test_dashboard_settings(extra):
@@ -61,7 +62,7 @@ def test_dashboard_settings(extra):
     at = run("dashboard", state)
     text = " ".join(m.value for m in at.markdown)
     assert "to continue" not in text
-    assert "Plan status" in text
+    assert "Plan status" in text and "What this plan saves you" in text
 
 
 def test_contact_form(tmp_path, monkeypatch):
@@ -75,3 +76,13 @@ def test_contact_form(tmp_path, monkeypatch):
     at.checkbox[0].check()
     at.button[0].click().run()
     assert at.success and "Ada Obi" in (tmp_path / "leads.csv").read_text()
+
+
+def test_dashboard_approve_then_ship():
+    at = run("dashboard", dict(BASE))
+    text = lambda: " ".join(m.value for m in at.markdown)
+    assert "Approve the plan" in text()
+    next(b for b in at.button if b.label == "Approve plan").click().run()
+    assert "Plan approved." in text() and "Approve the plan in" not in text()
+    next(b for b in at.button if b.label == "Demo: goods have shipped").click().run()
+    assert "Payment sent" in text() and "less than buying on the parallel market" in text()
