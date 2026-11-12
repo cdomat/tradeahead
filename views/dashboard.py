@@ -291,16 +291,10 @@ def _plan_tab(res, inv, cash, m, sim, approval) -> None:
          "sub": "interest your naira would have earned"},
     ])
     if p.coverage_gap_fx > 1:
-        c1, c2 = st.columns([1.6, 1])
-        with c1:
-            ui.alert(f"<b>Your cash covers {p.planned_fx / p.target_fx:.0%} of the target.</b> Buying the other "
-                     f"{ui.money(p.coverage_gap_fx, ccy)} early would take you below your "
-                     f"{ui.money(cash['buffer'], local, short=True)} buffer, so it is bought on the due date "
-                     f"at that day's rate.", "warn")
-        with c2:
-            ui.html(f"""<div class="ta-locked"><span class="ta-muted">Coming soon</span>
-            <b>Finance the gap</b><p class="ta-muted" style="margin:.2rem 0 0">A partner lender funds the missing
-            {ui.money(p.coverage_gap_fx, ccy)}.</p></div>""")
+        ui.alert(f"<b>Your cash covers {p.planned_fx / p.target_fx:.0%} of the target.</b> Buying the other "
+                 f"{ui.money(p.coverage_gap_fx, ccy)} early would take you below your "
+                 f"{ui.money(cash['buffer'], local, short=True)} buffer, so it is bought on the due date "
+                 f"at that day's rate.", "warn")
 
     l, r = st.columns(2, gap="large")
     with l:

@@ -138,8 +138,6 @@ a{color:var(--ember);}
 .ta-alert--warn{background:var(--warn-bg);border-color:#F0D3A6;color:#5C3D0C;}
 .ta-alert--info{background:var(--info-bg);border-color:var(--teal-l);color:var(--ink);}
 .ta-alert--ok{background:var(--pos-bg);border-color:#BCDCCB;color:#1D5A40;}
-.ta-locked{border:1px dashed var(--line);border-radius:var(--r);padding:1.1rem 1.3rem;background:var(--paper);}
-.ta-locked .ta-muted{display:block;margin-bottom:.2rem;}
 
 /* ---------- Call to action band ---------- */
 [class*="st-key-cta"]{background:var(--paper);border:1px solid var(--sand);border-radius:16px;padding:1.8rem 2rem;box-shadow:var(--shadow);margin-top:3.5rem;}

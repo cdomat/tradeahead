@@ -40,7 +40,7 @@ An importer owes, say, $35,000 in 20 trading days, but holds naira and cannot co
 
 **The cash buffer is a hard rule.** The business sets a minimum operating balance, and no purchase may take cash below it. Planned purchases are costed at a pessimistic rate (a 1-in-20 bad outcome), so the buffer still holds if the naira weakens during the plan. Expected customer receipts and expenses are included day by day.
 
-**If cash is not enough** to cover the whole invoice, the plan covers as much as it safely can and reports the rest as a **coverage gap**. That gap is the opening for a future financing product.
+**If cash is not enough** to cover the whole invoice, the plan covers as much as it safely can and reports the rest as a **coverage gap**.
 
 **Practical tidying.** Purchases are rounded to $100, kept above a $1,000 minimum ticket, and never placed in the final settlement days.
 
