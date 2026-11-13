@@ -310,20 +310,3 @@ a{color:var(--ember);}
 .ta-intro ul{margin:.3rem 0 0;padding-left:1.1rem;} .ta-intro li{margin:.2rem 0;}
 @media (max-width:1100px){.ta-flow{grid-template-columns:1fr 1fr;} .ta-flow__step::after{display:none;}}
 @media (max-width:640px){.ta-flow,.ta-intro{grid-template-columns:1fr;} .ta-stats>div h3{font-size:16px;}}
-
-/* tab bar in the header, at every screen width (replaces Streamlit's own menu, which folds into a side menu) */
-.st-key-topnav{position:fixed;top:0;left:190px;right:1rem;height:var(--bar-h);z-index:999992;align-items:center;
-  flex-wrap:nowrap!important;gap:.15rem!important;overflow-x:auto;scrollbar-width:none;}
-.st-key-topnav::-webkit-scrollbar{display:none;}
-.st-key-topnav [data-testid="stPageLink-NavLink"]{padding:.45rem .8rem;border-radius:0;background:transparent!important;
-  height:var(--bar-h);display:flex;align-items:center;transition:box-shadow .25s ease;}
-.st-key-topnav [data-testid="stPageLink-NavLink"]:hover{box-shadow:inset 0 -2px 0 var(--line);}
-.st-key-topnav p{color:var(--muted)!important;font-weight:500!important;font-size:14.5px!important;white-space:nowrap;
-  transition:color .25s ease;}
-.st-key-topnav a:hover p{color:var(--ink)!important;}
-[data-testid="stExpandSidebarButton"],[data-testid="stSidebar"]{display:none!important;}
-@media (max-width:640px){
-  .st-key-topnav{left:172px;right:0;}
-  .st-key-topnav [data-testid="stPageLink-NavLink"]{padding:.45rem .55rem;}
-  .st-key-topnav p{font-size:13.5px!important;}
-}
