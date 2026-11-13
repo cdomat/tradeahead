@@ -69,6 +69,24 @@ def status_pill(text: str) -> str:
     return pill(text, STATUS_TONES.get(text, "neutral"))
 
 
+# Small stroke icons, drawn in currentColor so they follow the surrounding colour.
+_SVG = ('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" '
+        'stroke-linecap="round" stroke-linejoin="round">{}</svg>')
+ICONS = {
+    "invoice": _SVG.format('<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7M9 17h5"/>'),
+    "shield": _SVG.format('<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'),
+    "spot": _SVG.format('<path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>'),
+    "buffer": _SVG.format('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M7 15h3"/>'),
+    "route": _SVG.format('<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/>'
+                         '<path d="M8 18h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>'),
+    "send": _SVG.format('<path d="M4 12l16-8-6 16-3-7z"/><path d="M11 13l9-9"/>'),
+}
+
+
+def icon(name: str) -> str:
+    return f'<span class="ta-icon">{ICONS[name]}</span>'
+
+
 def header(title: str, subtitle: str = "", right: str = "") -> None:
     html(f"""
     <div class="ta-header"><div>

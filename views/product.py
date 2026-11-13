@@ -15,18 +15,16 @@ FEATURES = ["Protection plan", "Best route", "Real-rate index"]
 
 def render() -> None:
     ui.header("Product & Technology",
-              "Four steps from supplier invoice to supplier payment. TradeAhead does the planning and routing; "
-              "licensed banks and payment partners hold and move the money.")
+              "Four steps from supplier invoice to supplier payment. We plan and route; licensed partners hold "
+              "and move the money.")
 
-    ui.cols([
-        ("Step 1", "Invoice & cash", "Upload the invoice; amount, currency and dates are read for you. "
-         "Add your cash and the buffer you need to keep."),
-        ("Step 2", "Your plan", "Daily purchases that stay above your buffer, with what they save you. "
-         "Nothing is bought until you approve."),
-        ("Step 3", "Best route", "Each purchase goes to the dealer with the best rate once their delivery "
-         "record is counted."),
-        ("Step 4", "Supplier payment", "Currency is held at a licensed partner and sent when the goods ship."),
-    ])
+    steps = [("invoice", "Invoice & cash", "We read amount, currency and dates from your invoice."),
+             ("shield", "Your plan", "Daily purchases above your cash buffer. You approve first."),
+             ("route", "Best route", "Each purchase goes to the dealer most likely to deliver on time."),
+             ("send", "Supplier payment", "Held at a licensed partner, paid when the goods ship.")]
+    ui.html('<div class="ta-flow">' + "".join(
+        f'<div class="ta-flow__step"><div class="ta-flow__top">{ui.icon(i)}<span>Step {n}</span></div>'
+        f'<h3>{t}</h3><p>{body}</p></div>' for n, (i, t, body) in enumerate(steps, 1)) + "</div>")
 
     ui.section("How each part works", "Choose one to see a live example on today's rates.")
     choice = st.segmented_control("Feature", FEATURES, default=FEATURES[0], key="tech_el",
@@ -44,12 +42,11 @@ def render() -> None:
     with st.container(key="band_tint_roles"):
         ui.section("Who does what")
         ui.cols([
-            ("TradeAhead", "Plans and routes", "Reads your invoices, builds and updates the protection plan, chooses "
-             "the dealer for each purchase and sends the payment instructions."),
-            ("Licensed partners", "Hold and move the money", "Banks and licensed FX and payment providers hold your "
-             "naira and dollars, carry out each purchase and pay your supplier."),
-            ("You", "Stay in control", "Set your cash buffer and how much of each invoice to protect, approve the "
-             "plan, and see every payment before it goes out."),
+            ("TradeAhead", "Plans and routes", "Builds your plan, picks the dealer for each purchase and sends "
+             "the payment instructions."),
+            ("Licensed partners", "Hold and move the money", "Banks and licensed providers hold your funds, buy the "
+             "currency and pay your supplier."),
+            ("You", "Stay in control", "Set your buffer, approve the plan and see every payment before it goes out."),
         ])
 
     st.write("")
@@ -64,17 +61,13 @@ def render() -> None:
 
 def _intro(what: str, benefits: list[str]) -> None:
     items = "".join(f"<li>{b}</li>" for b in benefits)
-    ui.html(f"""<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;
-      margin:1.2rem 0 2rem"><p style="margin:0">{what}</p>
-      <div><div class="ta-kicker">What you get</div><ul style="margin:.3rem 0 0;padding-left:1.1rem">{items}</ul></div>
-      </div>""")
+    ui.html(f"""<div class="ta-intro"><p>{what}</p>
+      <div><div class="ta-kicker">What you get</div><ul>{items}</ul></div></div>""")
 
 
 def _plan_demo(wide) -> None:
-    _intro("Sets how many dollars to buy on each trading day before your payment is due. Buying early removes "
-           "exchange-rate risk but gives up interest on your naira deposits, and buying everything in "
-           "one day gets a worse rate. The plan balances the three, and <b>never lets your cash fall below the "
-           "buffer you set</b>, even if the currency weakens sharply while it runs.",
+    _intro("Sets how many dollars to buy each trading day before the due date. It weighs exchange-rate risk "
+           "against the interest your naira earns, and <b>never lets your cash fall below your buffer</b>.",
            ["A day-by-day purchase list you approve before anything is bought",
             "Most of the exchange-rate risk removed before the due date",
             "A clear warning when your cash can't cover the whole invoice"])
@@ -104,9 +97,8 @@ def _plan_demo(wide) -> None:
 
 
 def _routing_demo(ref, wide) -> None:
-    _intro("Ranks dealers by what a dollar really costs you: the rate you actually get, our fee, and the "
-           "cost if the dealer delivers late or only part of the amount. The closer your payment date, the more "
-           "a slow dealer costs, so <b>the cheapest quote is often not the best route</b>.",
+    _intro("Ranks dealers by what a dollar really costs once late or partial deliveries are counted. Close to "
+           "the due date, <b>the cheapest quote is often not the best route</b>.",
            ["Purchases placed with dealers that deliver on time",
             "Large purchases split so no single dealer carries more than 60%",
             "Every part of the conversion cost shown"])
@@ -123,9 +115,8 @@ def _routing_demo(ref, wide) -> None:
 
 
 def _eri_demo(ref) -> None:
-    _intro("A quoted rate is not always the rate you get. The index learns from every completed trade, by "
-           "dealer and purchase size: the rate actually paid, and how often the full amount arrived on time. "
-           "Recent trades count more, and dealers with little history are treated with caution.",
+    _intro("Learns from every completed trade what each dealer really charges and how often they deliver on "
+           "time, by purchase size. Recent trades count more.",
            ["Rates you can actually get, not just quoted rates",
             "Each dealer's on-time record by purchase size",
             "Plans and routes based on real trades, not promises"])

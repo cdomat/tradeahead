@@ -1,54 +1,63 @@
-"""Company: landing page for importers. Problem, benefits, a devaluation simulator and the next step."""
+"""Company: landing page for importers.
+
+Hero with a live sample plan, the problem in three numbers, what TradeAhead gives you,
+a devaluation simulator and the next step. Every number comes from live rates or the
+same engine the Dashboard uses.
+"""
 
 from datetime import date
 
 import pandas as pd
 import streamlit as st
 
-from engine import market, plan
 from services import fx, workspace
+from services.workspace import Sim
 from ui import charts
 from ui import components as ui
 from views import PAGES
 
+SAMPLE = {"amount": 40_000.0, "days": 15, "cash": 60e6, "buffer": 18e6, "inflow": 2.5e6, "outflow": 1.2e6}
+
+
+# ---------------------------------------------------------------- data
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def _preview_plan(spot_key: float) -> tuple[pd.DataFrame, float]:
-    """A sample plan at today's USD/NGN rate: $40,000 due in 15 trading days, ₦18m buffer."""
-    wide, _ = workspace.fx_history()
-    sc = market.scenario_from_history(wide["USD/NGN"], 15, rate_gap=0.16)
-    res = plan.build_plan(plan.PlanInputs(
-        amount_fx=40_000, cover_ratio=1.0, scenario=sc, opening_cash=60e6, cash_buffer=18e6,
-        daily_inflow=2.5e6, daily_outflow=1.2e6, exec_cost=0.02, risk_aversion=3.0, max_daily_fx=60_000))
-    buys = res.schedule[res.schedule["buy_fx"] > 0][["date", "buy_fx", "expected_rate"]]
-    return buys, float(res.risk_reduction)
+def _sample(day: date) -> dict:
+    """The sample invoice run through the real engine at today's rate."""
+    start = workspace.plan_start(day)
+    due = (pd.Timestamp(start) + pd.offsets.BDay(SAMPLE["days"])).date()
+    res = workspace.run("NG", "USD", SAMPLE["amount"], due, SAMPLE["cash"], SAMPLE["buffer"],
+                        SAMPLE["inflow"], SAMPLE["outflow"], Sim())
+    p, sched = res["plan"], res["plan"].schedule
+    return {
+        "due": due, "protected": p.planned_fx / SAMPLE["amount"], "risk_cut": float(p.risk_reduction),
+        "saved": float(res["compare"]["savings"]["Unprotected (parallel market)"]["mean"]),
+        "coverage": sched["coverage"].tolist(), "buys": sched.loc[sched["buy_fx"] > 0, ["date", "buy_fx"]],
+        "lowest_cash": float(sched["cash_after"].min()), "ranking": res["ranking"],
+    }
 
 
-def _preview_card() -> str:
-    v, _, _ = workspace.latest("USD/NGN")
-    buys, risk_cut = _preview_plan(round(v, 0))
-    rows = "".join(f'<tr><td>{pd.Timestamp(r.date):%a %d %b}</td><td class="r">{ui.money(r.buy_fx, "USD")}</td>'
-                   f'<td class="r">{ui.status_pill("Scheduled")}</td></tr>' for r in buys.head(5).itertuples())
-    more = len(buys) - 5
-    if more > 0:
-        rows += f'<tr><td class="ta-muted" colspan="3">+ {more} more purchases</td></tr>'
-    return f"""<div class="ta-card ta-preview">
-      <h4>Sample protection plan</h4>
-      <div class="amt">$40,000 <span class="ta-muted">due in 15 trading days</span></div>
-      <table>{rows}</table>
-      <div class="foot"><b>{risk_cut:.0%}</b> of the exchange-rate risk removed. Your ₦18m cash buffer is
-      never touched. Based on today's rate of ₦{v:,.0f} per dollar.</div></div>"""
+def _mini_bars(values: list[float], cls: str) -> str:
+    top = max(values) if values else 1
+    return f'<div class="{cls}">' + "".join(
+        f'<i style="height:{max(v / top, 0.04) * 100:.0f}%"></i>' for v in values) + "</div>"
 
+
+# ---------------------------------------------------------------- page
 
 def render() -> None:
+    v, chg, as_of = workspace.latest("USD/NGN")
+    wide, source = workspace.fx_history()
+    ref = workspace.reference()
+    sample = _sample(date.today())
+
     # ---------------------------------------------------------------- hero
-    left, right = st.columns([1.15, 1], gap="large", vertical_alignment="center")
+    left, right = st.columns([1.1, 1], gap="large", vertical_alignment="center")
     with left:
         ui.html("""<div class="ta-hero">
           <div class="ta-kicker">Now piloting with importers in Nigeria</div>
           <h1>Pay foreign suppliers on time, at a cost you can plan.</h1>
-          <p>Upload a supplier invoice and TradeAhead builds a protection plan your cash can afford, buys the
-          currency through dealers that deliver on time, and pays your supplier when the goods ship.</p>
+          <p>We buy your currency day by day within your cash buffer, and pay your supplier when the goods ship.</p>
         </div>""")
         st.write("")
         c1, c2, _ = st.columns([1.1, 1, 0.6])
@@ -59,40 +68,34 @@ def render() -> None:
         ui.html('<div class="ta-trust">No derivatives <span>·</span> Funds held by licensed partners '
                 '<span>·</span> Free to start</div>')
     with right:
-        ui.html(_preview_card())
+        ui.html(_live_card(sample, v, chg, as_of, source))
 
-    # ---------------------------------------------------------------- problem (open, no box)
+    # ---------------------------------------------------------------- problem, in three numbers
+    s = wide["USD/NGN"].dropna()
+    worst = fx.worst_moves(s, 30, 1)
+    jump, when = (float(worst["move"].iloc[0]), f"{worst['start'].iloc[0]:%b %Y}") if not worst.empty else (0.0, "")
+    fills = ref["fills"][ref["fills"]["dealer_id"].str.startswith("NG")]
+    late = 1 - fills["on_time"].astype(float).mean()
     ui.section("Your supplier price is fixed. Your cost isn't.",
-               "You pay a deposit when you order and the balance before shipping, while your revenue arrives "
-               "weeks later in naira. If the naira falls in between, the same invoice costs far more.")
-    ui.cols([
-        ("Timing", "Devaluations arrive overnight",
-         "One announcement can move the rate 30% or more, long after the order price was agreed."),
-        ("Cash", "Converting early drains working capital",
-         "Buying the whole balance up front protects the price but ties up the cash you need to operate."),
-        ("Delivery", "Cheap quotes don't always arrive",
-         "Dealers that fill late or only partly force a rushed purchase at a worse rate, and a late supplier payment."),
-    ])
+               "Your revenue arrives weeks later, in naira. If the naira falls in between, the same invoice "
+               "costs far more.")
+    ui.html(f"""<div class="ta-stats">
+      <div><span class="k">Timing</span><b>+{jump:.0%}</b><h3>Devaluations arrive overnight</h3>
+        <span>The dollar's biggest 30-day jump against the naira, {when}.</span></div>
+      <div><span class="k">Cash</span><b>{ui.money(SAMPLE['amount'] * v, 'NGN', short=True)}</b>
+        <h3>Converting early drains cash</h3>
+        <span>Tied up today to pre-buy a {ui.money(SAMPLE['amount'], 'USD')} invoice in one go.</span></div>
+      <div><span class="k">Delivery</span><b>{late:.0%}</b><h3>Cheap quotes don't always arrive</h3>
+        <span>Of dealer purchases arrive late or only partly filled.</span></div>
+    </div>""")
 
-    # ---------------------------------------------------------------- benefits (dark focus block)
-    with st.container(key="band_ink_benefits"):
-        ui.section("What you get with TradeAhead")
-        ui.cols([
-            ("Predictable payments", "Know the cost before the due date",
-             "See how many dollars you'll buy each day and what the invoice will cost, instead of finding out on "
-             "the day you pay."),
-            ("No derivative risk", "Only buy what you owe",
-             "No forwards, options or margin calls. You buy the currency for an invoice you already have, through "
-             "licensed dealers."),
-            ("Protected cash flow", "Your buffer stays untouched",
-             "Every plan respects the minimum cash balance you set, even if the naira weakens sharply while it runs."),
-        ])
+    # ---------------------------------------------------------------- what you get
+    ui.section("What you get with TradeAhead")
+    ui.html(_benefits(sample))
 
     # ---------------------------------------------------------------- volatility simulator
     ui.section("See what a devaluation does to one invoice",
-               "Pick two dates: when the order was placed and when the balance was paid.")
-    wide, source = workspace.fx_history()
-    ref = workspace.reference()
+               "Pick a currency, the day you ordered and the day you paid.")
     with st.container(key="card_fxsim"):
         a, b, c, d = st.columns([1.2, 1, 1, 1])
         pair = a.selectbox("Currency pair", fx.NGN_PAIRS, index=0, key="hist_pair")
@@ -116,9 +119,9 @@ def render() -> None:
              "tone": "neg" if cost1 > cost0 else "pos", "highlight": True},
         ])
         st.plotly_chart(charts.fx_history(s, pair, ref["events"]), config=charts.CONFIG, theme=None, width="stretch")
-        worst = fx.worst_moves(s, 30, 3)
-        if not worst.empty:
-            items = " · ".join(f"{r.start:%b %Y}: <b>{r.move:+.0%}</b>" for r in worst.itertuples())
+        moves = fx.worst_moves(s, 30, 3)
+        if not moves.empty:
+            items = " · ".join(f"{r.start:%b %Y}: <b>{r.move:+.0%}</b>" for r in moves.itertuples())
             ui.html(f'<p class="ta-muted">Largest 30-day moves in {pair}: {items}. Source: {source}.</p>')
 
     # ---------------------------------------------------------------- call to action
@@ -127,7 +130,71 @@ def render() -> None:
         l, r = st.columns([2.2, 1], vertical_alignment="center")
         l.html("""<div><div class="ta-kicker">Nigeria pilot</div>
             <h2 style="font-size:24px;margin:0 0 .35rem">Try it on your next invoice</h2>
-            <p class="ta-muted" style="font-size:16px;margin:0">For Nigerian importers paying in US dollars,
-            Chinese yuan, euros, pounds or Canadian dollars. Upload an invoice, or try it with our sample.</p></div>""")
+            <p class="ta-muted" style="font-size:16px;margin:0">Dollars, yuan, euros, pounds or Canadian dollars.
+            Upload an invoice or use our sample.</p></div>""")
         if r.button("Open the dashboard", type="primary", width="stretch", key="open_dash_bottom"):
             st.switch_page(PAGES["dashboard"])
+
+
+# ---------------------------------------------------------------- pieces
+
+def _live_card(sample, v, chg, as_of, source) -> str:
+    buys = sample["buys"]
+    first = buys.iloc[0] if not buys.empty else None
+    first_txt = f", first {ui.money(first.buy_fx, 'USD')} on {pd.Timestamp(first.date):%a %d %b}" if first is not None else ""
+    safe = sample["lowest_cash"] >= SAMPLE["buffer"]
+    return f"""<div class="ta-live">
+      <div class="ta-live__top"><span class="ta-live__label">Sample invoice · Shenzhen supplier</span>
+        {ui.pill("Buffer safe", "ok") if safe else ui.pill("Below buffer", "warn")}</div>
+      <div class="ta-live__amt">{ui.money(SAMPLE['amount'], 'USD')}<span>due {sample['due']:%d %b}</span></div>
+      <div class="ta-live__row"><span>Protected</span><b>{sample['protected']:.0%}</b></div>
+      <div class="ta-live__track"><i style="width:{sample['protected'] * 100:.0f}%"></i></div>
+      {_mini_bars(buys['buy_fx'].tolist(), 'ta-live__bars')}
+      <div class="ta-live__caption">{len(buys)} daily purchases{first_txt}</div>
+      <div class="ta-live__stats">
+        <div><span>Saved vs. parallel market</span><b class="pos">{ui.money(sample['saved'], 'NGN', short=True)}</b></div>
+        <div><span>Exchange-rate risk removed</span><b>{sample['risk_cut']:.0%}</b></div>
+      </div>
+      <div class="ta-live__foot">{ui.ticker('USD/NGN', v, chg, 'live' if 'live' in source else source.lower(), as_of)}
+        <span>Sample plan at today's rate</span></div>
+    </div>"""
+
+
+def _benefits(sample) -> str:
+    cov = sample["coverage"]
+    lo, buf, top = sample["lowest_cash"], SAMPLE["buffer"], SAMPLE["cash"]
+    rank = sample["ranking"].head(3) if not sample["ranking"].empty else pd.DataFrame()
+    dealers = "".join(
+        f'<div class="ta-b__dealer{" best" if r.route_rank == 1 else ""}"><b>{r.dealer}</b>'
+        f'<span>Quote #{r.screen_rank}</span><span>{r.on_time_p:.0%} on time</span><em>#{r.route_rank}</em></div>'
+        for r in rank.itertuples())
+    return f"""<div class="ta-bento">
+      <div class="ta-b ta-b--wide ta-b--ink">
+        {ui.icon('shield')}
+        <h3>Predictable payments</h3>
+        <p>Small purchases every trading day, so you know the cost before the due date.</p>
+        {_mini_bars([max(c, 0.02) for c in cov], 'ta-b__steps')}
+        <div class="ta-b__axis"><span>Today</span><span>{cov[-1]:.0%} protected by the due date</span></div>
+      </div>
+      <div class="ta-b">
+        {ui.icon('spot')}
+        <div class="ta-b__big">0</div>
+        <h3>Derivatives</h3>
+        <p>Only buy what you owe. No forwards, options or margin calls.</p>
+      </div>
+      <div class="ta-b">
+        {ui.icon('buffer')}
+        <h3>Protected cash flow</h3>
+        <p>The buffer for rent, payroll and stock is never touched.</p>
+        <div class="ta-b__gauge"><span class="zone" style="width:{buf / top * 100:.0f}%"></span>
+          <span class="mark" style="left:{min(lo / top, 1) * 100:.0f}%"></span></div>
+        <div class="ta-b__axis"><span>Buffer {ui.money(buf, 'NGN', short=True)}</span>
+          <span>Lowest cash {ui.money(lo, 'NGN', short=True)}</span></div>
+      </div>
+      <div class="ta-b ta-b--wide">
+        {ui.icon('route')}
+        <h3>On-time delivery</h3>
+        <p>Dealers ranked by what arrives on time, not by the screen rate.</p>
+        <div class="ta-b__dealers">{dealers}</div>
+      </div>
+    </div>"""
