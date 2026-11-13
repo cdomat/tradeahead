@@ -196,7 +196,7 @@ def route_plan(schedule: pd.DataFrame, due_day: int, scenario, eri: pd.DataFrame
 
 
 def cost_waterfall(legs: pd.DataFrame) -> dict[str, float]:
-    """Local-currency cost split for the Dealer Liquidity Waterfall chart. Parts add up to the all-in cost."""
+    """Local-currency cost split shown on the Dashboard. Parts add up to the all-in cost."""
     if legs.empty:
         return {}
     a = legs["amount_fx"]

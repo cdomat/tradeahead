@@ -6,9 +6,10 @@
 Writes to data/:
     fx_history.csv     daily rates for the naira pairs (live, cleaned)
     fx_events.json     historical devaluations shown in the volatility chart
-    markets.json       per-market assumptions (deposit rates, parallel premium, fees)
+    markets.json       market assumptions (deposit rates, parallel premium, fees) and pricing tiers
     dealers.json       licensed dealer panel (fictional names) used by routing
     dealer_fills.csv   simulated past fills that the Executable Rate Index learns from
+    fx_calibration.json  volatility and drift per pair, for reference
 and the sample invoice (PDF + CSV) to assets/samples/.
 
 No importer or invoice data is generated for the Dashboard: users enter their own.

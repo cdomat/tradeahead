@@ -1,4 +1,4 @@
-"""Product & Technology: customer-facing feature guide, with a live demo of each feature."""
+"""Product & Technology: the four steps, and a live demo of each part on today's rates."""
 
 import numpy as np
 import streamlit as st

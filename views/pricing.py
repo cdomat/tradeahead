@@ -1,4 +1,4 @@
-"""Pricing & Contact: tier comparison, FX margin calculator and lead capture form."""
+"""Pricing & Contact: plan cards, feature comparison, cost calculator and contact form."""
 
 from __future__ import annotations
 

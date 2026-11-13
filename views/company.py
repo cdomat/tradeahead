@@ -65,8 +65,6 @@ def render() -> None:
             st.switch_page(PAGES["dashboard"])
         if c2.button("How it works", width="stretch"):
             st.switch_page(PAGES["product"])
-        ui.html('<div class="ta-trust">No derivatives <span>·</span> Funds held by licensed partners '
-                '<span>·</span> Free to start</div>')
     with right:
         ui.html(_live_card(sample, v, chg, as_of, source))
 
@@ -77,17 +75,14 @@ def render() -> None:
     fills = ref["fills"][ref["fills"]["dealer_id"].str.startswith("NG")]
     late = 1 - fills["on_time"].astype(float).mean()
     ui.section("Your supplier price is fixed. Your cost isn't.",
-               "Your revenue arrives weeks later, in naira. If the naira falls in between, the same invoice "
-               "costs far more.")
-    ui.html(f"""<div class="ta-stats">
-      <div><span class="k">Timing</span><b>+{jump:.0%}</b><h3>Devaluations arrive overnight</h3>
-        <span>The dollar's biggest 30-day jump against the naira, {when}.</span></div>
-      <div><span class="k">Cash</span><b>{ui.money(SAMPLE['amount'] * v, 'NGN', short=True)}</b>
-        <h3>Converting early drains cash</h3>
-        <span>Tied up today to pre-buy a {ui.money(SAMPLE['amount'], 'USD')} invoice in one go.</span></div>
-      <div><span class="k">Delivery</span><b>{late:.0%}</b><h3>Cheap quotes don't always arrive</h3>
-        <span>Of dealer purchases arrive late or only partly filled.</span></div>
-    </div>""")
+               "Your revenue arrives weeks later, in naira.")
+    tiles = [("Timing", f"+{jump:.0%}", "Devaluations arrive overnight", f"Biggest 30-day jump in the dollar, {when}"),
+             ("Cash", ui.money(SAMPLE["amount"] * v, "NGN", short=True), "Converting early drains cash",
+              f"To pre-buy a {ui.money(SAMPLE['amount'], 'USD')} invoice today"),
+             ("Delivery", f"{late:.0%}", "Cheap quotes don't always arrive", "Of dealer purchases late or partly filled")]
+    ui.html('<div class="ta-stats">' + "".join(
+        f'<div><span class="k">{k}</span><b>{num}</b><h3>{t}</h3><p>{note}</p></div>'
+        for k, num, t, note in tiles) + "</div>")
 
     # ---------------------------------------------------------------- what you get
     ui.section("What you get with TradeAhead")
