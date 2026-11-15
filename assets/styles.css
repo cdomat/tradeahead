@@ -174,6 +174,7 @@ a{color:var(--ember);}
 [class*="st-key-band_"]{border-radius:20px;padding:4rem 2rem;margin:5.5rem 0 2rem;}
 [class*="st-key-band_"] .ta-section{margin-top:0;}
 [class*="st-key-band_tint"]{background:#EBE8E0;}
+[class*="st-key-band_tint_roles"]{background:#EDEAE3;}  /* a touch lighter: a framed box reads darker than the full-width bands */
 
 /* ---------- Motion: soft fade-up on load, smooth hovers ---------- */
 @keyframes ta-fade-up{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
@@ -325,6 +326,8 @@ a{color:var(--ember);}
 
 /* Full-width tinted band behind a section (the shadow paints edge to edge without widening the page) */
 [class*="st-key-bleed"]{background:#EBE8E0;box-shadow:0 0 0 100vmax #EBE8E0;clip-path:inset(0 -100vmax);
-  padding:4rem 0 4.5rem;margin-top:7rem;}
+  padding:5.625rem 0 7.125rem;margin-top:5.375rem;}
 .stMain [class*="st-key-bleed"] .ta-section{margin-top:0;}
+/* the band edge sits halfway between blocks, so the next section starts closer */
+.stMain :has(> [class*="st-key-bleed"]) + * .ta-section{margin-top:4.375rem;}
 @media (max-width:640px){[class*="st-key-bleed"]{padding:2.5rem 0 3rem;margin-top:3.5rem;}}

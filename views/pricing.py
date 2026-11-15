@@ -52,14 +52,15 @@ def render() -> None:
             <div class="ta-muted">+ {t['fx_margin']:.1%} FX margin per conversion</div></div>""")
     ui.grid(cards, min_width=260)
 
-    ui.section("Compare plans")
-    ui.table([("Feature", "")] + [(n, "c") for n in names],
-             [[f] + ["<span class='ta-check'>✓</span>" if names.index(n) >= names.index(tier)
-                     else "<span class='ta-dash'>—</span>" for n in names]
-              for f, tier in FEATURES] +
-             [["<b>Monthly price</b>"] + [("Free" if tiers[n]["price_month"] == 0 else f"${tiers[n]['price_month']}")
-                                          for n in names],
-              ["<b>FX margin per conversion</b>"] + [f"{tiers[n]['fx_margin']:.1%}" for n in names]])
+    with st.container(key="bleed_compare"):
+        ui.section("Compare plans")
+        ui.table([("Feature", "")] + [(n, "c") for n in names],
+                 [[f] + ["<span class='ta-check'>✓</span>" if names.index(n) >= names.index(tier)
+                         else "<span class='ta-dash'>—</span>" for n in names]
+                  for f, tier in FEATURES] +
+                 [["<b>Monthly price</b>"] + [("Free" if tiers[n]["price_month"] == 0 else f"${tiers[n]['price_month']}")
+                                              for n in names],
+                  ["<b>FX margin per conversion</b>"] + [f"{tiers[n]['fx_margin']:.1%}" for n in names]])
 
     ui.section("What you would pay in a typical month",
                "The monthly price plus the FX margin on what you convert. No other fees.")
@@ -80,7 +81,7 @@ def render() -> None:
             b.markdown("<p class='ta-muted' style='padding-top:2rem'>Enter your monthly volume to compare the "
                        "total cost of each plan.</p>", unsafe_allow_html=True)
 
-    with st.container(key="bleed_contact"):
+    with st.container(key="band_tint_contact"):
         ui.section("Talk to our team",
                    "Tell us about your suppliers and payment cycle, and we'll set up your first protection plan with you.")
         l, _ = st.columns([1.6, 1], gap="large")
