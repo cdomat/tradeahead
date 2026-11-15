@@ -80,7 +80,7 @@ def render() -> None:
             b.markdown("<p class='ta-muted' style='padding-top:2rem'>Enter your monthly volume to compare the "
                        "total cost of each plan.</p>", unsafe_allow_html=True)
 
-    with st.container(key="band_tint_contact"):
+    with st.container(key="bleed_contact"):
         ui.section("Talk to our team",
                    "Tell us about your suppliers and payment cycle, and we'll set up your first protection plan with you.")
         l, _ = st.columns([1.6, 1], gap="large")

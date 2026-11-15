@@ -322,3 +322,9 @@ a{color:var(--ember);}
 /* company page only: a little more air between sections */
 .stMain:has(.ta-live) .ta-section{margin-top:7rem;}
 .stMain:has(.ta-live) [class*="st-key-cta"]{margin-top:4.5rem;}
+
+/* Full-width tinted band behind a section (the shadow paints edge to edge without widening the page) */
+[class*="st-key-bleed"]{background:#EBE8E0;box-shadow:0 0 0 100vmax #EBE8E0;clip-path:inset(0 -100vmax);
+  padding:4rem 0 4.5rem;margin-top:7rem;}
+.stMain [class*="st-key-bleed"] .ta-section{margin-top:0;}
+@media (max-width:640px){[class*="st-key-bleed"]{padding:2.5rem 0 3rem;margin-top:3.5rem;}}

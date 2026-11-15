@@ -85,8 +85,9 @@ def render() -> None:
         for k, num, t, note in tiles) + "</div>")
 
     # ---------------------------------------------------------------- what you get
-    ui.section("What you get with TradeAhead")
-    ui.html(_benefits(sample))
+    with st.container(key="bleed_benefits"):
+        ui.section("What you get with TradeAhead")
+        ui.html(_benefits(sample))
 
     # ---------------------------------------------------------------- volatility simulator
     ui.section("See what a devaluation does to one invoice",
