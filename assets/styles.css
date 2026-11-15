@@ -173,8 +173,7 @@ a{color:var(--ember);}
 /* ---------- Section bands: tinted and dark focus blocks ---------- */
 [class*="st-key-band_"]{border-radius:20px;padding:4rem 2rem;margin:5.5rem 0 2rem;}
 [class*="st-key-band_"] .ta-section{margin-top:0;}
-[class*="st-key-band_tint"]{background:#EBE8E0;}
-[class*="st-key-band_tint_roles"]{background:#EDEAE3;}  /* a touch lighter: a framed box reads darker than the full-width bands */
+[class*="st-key-band_tint"]{background:#EDEAE3;}  /* a touch lighter than the full-width bands: a framed box reads darker */
 
 /* ---------- Motion: soft fade-up on load, smooth hovers ---------- */
 @keyframes ta-fade-up{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
