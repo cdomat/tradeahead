@@ -57,7 +57,7 @@ def render() -> None:
         ui.html("""<div class="ta-hero">
           <div class="ta-kicker">Now piloting with importers in Nigeria</div>
           <h1>Pay foreign suppliers on time, at a cost you can plan.</h1>
-          <p>We buy your currency day by day within your cash buffer, and pay your supplier when the goods ship.</p>
+          <p>We plan your currency purchases day by day within your cash buffer, and our partner bank pays your supplier by the due date.</p>
         </div>""")
         st.write("")
         c1, c2, _ = st.columns([1.1, 1, 0.6])

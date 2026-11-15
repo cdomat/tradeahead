@@ -312,7 +312,7 @@ def _plan_tab(res, inv, cash, m, sim, approval) -> None:
                         width="stretch")
 
     buys = sched[sched["buy_fx"] > 0]
-    ui.subhead("What we will buy, and when", f"{len(buys)} purchases")
+    ui.subhead("What our partner bank will buy, and when", f"{len(buys)} purchases")
     ui.table([("Date", ""), (f"Buy ({ccy})", "r"), (f"Approx. cost ({local})", "r"), ("Protected so far", "")],
              [[f"{pd.Timestamp(r.date):%a %d %b}", ui.money(r.buy_fx, ccy),
                ui.money(r.local_needed, local, short=True), f"{ui.bar(r.coverage)}{r.coverage:.0%}"]
@@ -360,7 +360,7 @@ def _route_tab(res, inv, cash, m, sim, approval) -> None:
         if cheapest["dealer"] != best["dealer"]:
             ui.alert(f"<b>{cheapest['dealer']}</b> quotes the lowest rate, but <b>{best['dealer']}</b> delivers on "
                      f"time more often ({best['on_time_p']:.0%} vs. {cheapest['on_time_p']:.0%}). Once the cost of a "
-                     f"late delivery is counted, {best['dealer']} is cheaper, so we use it first.", "info")
+                     f"late delivery is counted, {best['dealer']} is cheaper, so we route your purchases there first.", "info")
         share = legs.groupby("dealer")["amount_fx"].sum() / legs["amount_fx"].sum()
         ui.subhead("Dealers for your purchases", "best route first")
         ui.table([("", "c"), ("Dealer", ""), ("Quoted rate", "r"), ("On-time record", ""),

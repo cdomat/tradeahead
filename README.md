@@ -5,7 +5,7 @@
 ## Overview
 
 TradeAhead helps importing SMEs in emerging markets pay foreign suppliers at a cost they can plan, starting with a pilot in Nigeria.
-It turns a supplier invoice into a daily currency-buying plan the business can afford, sends each purchase to the dealer most likely to deliver on time, and pays the supplier when the goods ship.
+It turns a supplier invoice into a daily currency-buying plan the business can afford and routes each purchase to the dealer most likely to deliver on time. Licensed partner banks convert and hold the money, and pay the supplier when the goods ship.
 
 The Dashboard follows one invoice through four steps: **Invoice & cash → Your plan → Best route → Supplier payment**.
 
