@@ -86,7 +86,7 @@ class RouteContext:
     daily_drift: float = 0.0
     margin: float = 0.008        # TradeAhead FX margin for the customer's tier
     late_cost_per_day: float = 0.003
-    fallback_bps: float = 150.0  # premium paid to cover a failed fill at short notice
+    fallback_bps: float = 150.0  # extra cost of re-buying a failed fill at short notice
 
 
 def score_dealers(ticket: float, ctx: RouteContext, eri: pd.DataFrame, dealers: list[dict],

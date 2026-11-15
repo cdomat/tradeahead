@@ -67,7 +67,7 @@ We simulate **20,000 paths** for the exchange rate up to the due date, including
 | **Unprotected (parallel market)** | Same, at the parallel-market rate (about 3.7% above official) |
 | Wait / buy everything today / equal daily amounts | Simple alternatives, for comparison |
 
-The Dashboard reports the typical saving against the parallel market, the saving in a bad month (worst 1 in 20), and the saving if the naira falls overnight by a chosen amount. Protection works like insurance: against a bank that delivers on time it costs a little on average (the naira interest given up), and it saves heavily when a devaluation hits. Against the parallel market, where most SMEs actually buy, it is cheaper in the large majority of outcomes.
+The Dashboard reports the typical saving against the parallel market, the saving in a bad month (worst 1 in 20), and the saving if the naira falls overnight by a chosen amount. Buying early has a cost and a benefit: against a bank that delivers on time it costs a little on average (the naira interest given up), and it saves heavily when a devaluation hits, because the currency is already bought. Against the parallel market, where most SMEs actually buy, it is cheaper in the large majority of outcomes.
 
 ## Project Architecture
 

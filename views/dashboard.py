@@ -475,7 +475,7 @@ def _savings(res, sim, m) -> None:
     ])
     note = (f" Against a bank that delivers on time it costs about {ui.money(-sb['mean'], local, short=True)} "
             "on average, the interest your naira would have earned." if sb["mean"] < 0 else "")
-    ui.html("<p class='ta-muted'>Protection works like insurance: it pays off when the naira falls." + note + "</p>")
+    ui.html("<p class='ta-muted'>Buying early fixes your cost, so it saves most when the naira falls." + note + "</p>")
 
     with st.expander("What if the naira falls overnight?"):
         a, b, _ = st.columns([1.2, 1, 1])
