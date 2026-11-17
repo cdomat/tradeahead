@@ -15,13 +15,11 @@ The Dashboard follows one invoice through four steps: **Invoice & cash → Your 
 
 **Naira pairs.** Yahoo has no direct naira crosses, so each pair is built from its two dollar rates: CNY/NGN = naira per dollar ÷ yuan per dollar. This gives USD, CNY, EUR, GBP and CAD → NGN.
 
-**Spike cleaning.** Each day's rate is compared with the median of the five days around it. A rate more than 7% away is treated as a data glitch and replaced with that median; a real devaluation stays, because the median moves with it.
-
 **Fallback.** If the live feed fails, the app uses the saved snapshot in `data/fx_history.csv`, and if that is missing, a simulated series that follows the historical path. The app always labels which source is in use.
 
 **Volatility and devaluations.** History is split into two behaviours:
 - **Normal daily movement:** the spread of calm days over the last year.
-- **Sudden devaluations:** days where the rate jumped more than 5%, which give how often they happen and how big they are (USD/NGN since 2021: 14 such days, about 12% on average).
+- **Sudden devaluations:** days where the rate jumped more than 5%, which give how often they happen and how big they are (USD/NGN since 2021: 19 such days, about 12% on average).
 
 The forecast assumes the rate drifts in line with the interest-rate gap between the two currencies, as a fair forward price would, so the plan never bets on the direction of the rate.
 
@@ -85,7 +83,7 @@ TradeAhead/
 │   ├── routing.py         Executable Rate Index and dealer ranking
 │   └── savings.py         Comparison against unprotected buying
 ├── services/              Data and glue between engine and pages
-│   ├── fx.py              Live FX fetch, cleaning, fallback
+│   ├── fx.py              Live FX fetch and fallback
 │   ├── invoice.py         Sample invoice builder and upload reader
 │   └── workspace.py       Runs a full Dashboard case and caches it
 ├── ui/                    Reusable visual pieces

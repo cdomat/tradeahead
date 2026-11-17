@@ -1,4 +1,4 @@
-"""Live FX data from Yahoo Finance (yfinance), with cleaning and an offline fallback.
+"""Live FX data from Yahoo Finance (yfinance), with an offline fallback.
 
 Yahoo quotes most currencies against the US dollar ("NGN=X" = naira per dollar).
 Direct naira crosses such as CNY/NGN are not listed, so every pair is built from
@@ -23,19 +23,6 @@ NGN_PAIRS = ["USD/NGN", "CNY/NGN", "EUR/NGN", "GBP/NGN", "CAD/NGN"]
 ALL_PAIRS = NGN_PAIRS
 
 
-def _clean(series: pd.Series, jump: float = 0.07) -> pd.Series:
-    """Remove one-day spikes that reverse, keep real devaluations.
-
-    A real devaluation stays at the new level, so the centred 5-day median
-    follows it. A data glitch sits far from that median for a day or two and
-    is replaced by it.
-    """
-    s = series.astype(float).ffill()
-    med = s.rolling(5, center=True, min_periods=1).median()
-    spike = (s / med - 1).abs() > jump
-    return s.mask(spike, med)
-
-
 def _crosses(legs: pd.DataFrame) -> pd.DataFrame:
     """Turn dollar legs (units per USD) into the pairs the app shows."""
     out = {}
@@ -55,7 +42,6 @@ def fetch_live(start: str = "2021-01-01") -> pd.DataFrame:
         raise RuntimeError("Yahoo Finance returned no data")
     legs = raw.rename(columns={v: k for k, v in USD_LEGS.items()})
     legs = legs.sort_index().ffill().dropna(how="any")
-    legs = legs.apply(_clean)
     legs.index = pd.to_datetime(legs.index).tz_localize(None).normalize()
     legs = legs[legs.index.day_of_week < 5]  # Yahoo sometimes adds a weekend row
     return _crosses(legs).round(4)

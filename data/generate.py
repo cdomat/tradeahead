@@ -4,7 +4,7 @@
     python data/generate.py --offline  # no network: saved snapshot, else simulated FX
 
 Writes to data/:
-    fx_history.csv     daily rates for the naira pairs (live, cleaned)
+    fx_history.csv     daily rates for the naira pairs (live)
     fx_events.json     historical devaluations shown in the volatility chart
     markets.json       market assumptions (deposit rates, parallel premium, fees) and pricing tiers
     dealers.json       licensed dealer panel (fictional names) used by routing
