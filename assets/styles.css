@@ -16,6 +16,7 @@
 .stApp{background:var(--canvas);color:var(--text);font-family:var(--font);}
 .stApp p,.stApp li,.stApp label,.stApp input,.stApp textarea,.stApp button{font-family:var(--font);}
 .stApp p,.stApp li{font-size:15px;line-height:1.6;}
+[data-testid="stMarkdown"] p,[data-testid="stMarkdown"] li{text-wrap:pretty;}  /* no single word on the last line */
 .stApp h1,.stApp h2,.stApp h3,.stApp h4{font-family:var(--font);color:var(--ink);font-weight:600;letter-spacing:-.005em;}
 .stApp em,.stApp i{font-style:normal;}
 [data-testid="stMainBlockContainer"],.block-container{max-width:1200px;padding:calc(var(--bar-h) + 2.2rem) 2rem 4rem;}
@@ -305,7 +306,7 @@ a{color:var(--ember);}
 .ta-flow__top>span:last-child{font-size:13px;font-weight:600;color:var(--ember);}
 .ta-flow__step h3{font-size:18px;margin:0 0 .3rem;padding:0;}
 .ta-flow__step p{font-size:14.5px;color:var(--muted);margin:0;line-height:1.55;}
-.ta-intro{display:grid;grid-template-columns:1.3fr 1fr;gap:2rem;margin:1.2rem 0 2rem;align-items:start;}
+.ta-intro{display:grid;grid-template-columns:1.1fr 1fr;gap:2rem;margin:1.2rem 0 2rem;align-items:start;}
 .ta-intro p,.ta-intro li{font-size:16px;line-height:1.6;}
 .ta-intro p{margin:0;}
 .ta-intro ul{margin:0;padding-left:1.1rem;} .ta-intro li{margin:0 0 .25rem;}
