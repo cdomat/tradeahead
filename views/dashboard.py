@@ -419,7 +419,7 @@ def _payment_tab(res, inv, cash, m, sim, approval) -> None:
             Value date {max(inv['bl_date'], today):%d %b %Y}</p>
             <p>Expected cost {ui.money(cost, res['local'], short=True)}<br>
             <b>{ui.money(saved, res['local'], short=True)}</b> less than buying on the parallel market</p>
-            <p style="margin-top:.6rem">{ui.status_pill('Paid')} {ui.pill('Demo', 'neutral')}</p></div>""")
+            <p style="margin-top:.6rem">{ui.status_pill('Paid')}</p></div>""")
             if st.button("Undo", key="bl_undo"):
                 st.session_state[bl_key] = False
                 st.rerun()
@@ -430,16 +430,24 @@ def _payment_tab(res, inv, cash, m, sim, approval) -> None:
             (expected {inv['bl_date']:%d %b})<br>Deadline {inv['due_date']:%d %b %Y}</p>
             <p style="margin-top:.6rem">{ui.status_pill('Awaiting B/L')}</p></div>""")
             st.write("")
-            if st.button("Demo: goods have shipped", type="primary", width="stretch", disabled=not approved):
+            if st.button("Confirm goods have shipped", type="primary", width="stretch", disabled=not approved):
                 st.session_state[bl_key] = True
                 st.rerun()
+            if not approved:
+                st.caption("Available once your plan is approved.")
     with r:
-        held_now = sched.loc[pd.to_datetime(sched["date"]) < pd.Timestamp(today), "buy_fx"].sum() if approved else 0
-        ui.kpis([
-            {"label": "Held for you today", "value": ui.money(held_now, ccy), "sub": "at our licensed partner"},
-            {"label": "Still to buy", "value": ui.money(max(float(inv["balance"]) - held_now, 0), ccy),
-             "sub": "on the plan and the due date"},
-        ])
+        if received:
+            ui.kpis([
+                {"label": "Paid to your supplier", "value": ui.money(float(inv["balance"]), ccy), "sub": "by our partner bank"},
+                {"label": "Still to buy", "value": ui.money(0, ccy), "sub": "the balance is settled"},
+            ])
+        else:
+            held_now = sched.loc[pd.to_datetime(sched["date"]) < pd.Timestamp(today), "buy_fx"].sum() if approved else 0
+            ui.kpis([
+                {"label": "Held for you today", "value": ui.money(held_now, ccy), "sub": "at our licensed partner"},
+                {"label": "Still to buy", "value": ui.money(max(float(inv["balance"]) - held_now, 0), ccy),
+                 "sub": "on the plan and the due date"},
+            ])
         legs = res["legs"]
         if not legs.empty:
             rows = []

@@ -61,7 +61,7 @@ def render() -> None:
 
 def _intro(what: str, benefits: list[str]) -> None:
     items = "".join(f"<li>{b}</li>" for b in benefits)
-    ui.html(f"""<div class="ta-intro"><p>{what}</p>
+    ui.html(f"""<div class="ta-intro"><div><div class="ta-kicker">What it does</div><p>{what}</p></div>
       <div><div class="ta-kicker">What you get</div><ul>{items}</ul></div></div>""")
 
 

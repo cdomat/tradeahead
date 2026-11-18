@@ -86,7 +86,7 @@ def test_dashboard_approve_then_ship():
     assert "Approve the plan" in text()
     next(b for b in at.button if b.label == "Approve plan").click().run()
     assert "Plan approved." in text() and "Approve the plan in" not in text()
-    next(b for b in at.button if b.label == "Demo: goods have shipped").click().run()
+    next(b for b in at.button if b.label == "Confirm goods have shipped").click().run()
     assert "Payment sent" in text() and "less than buying on the parallel market" in text()
     assert "Waiting for approval" not in text()
 
